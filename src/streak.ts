@@ -44,17 +44,29 @@ export function currentStreak(
   days: ContributionDay[],
   today: string = localTodayISO(),
 ): number {
+  return currentStreakDates(days, today).length;
+}
+
+/**
+ * The dates (oldest → newest) making up the current streak. Same lenient
+ * semantics as currentStreak — this is the single source of truth for both
+ * the counter and the renderer's streak highlight.
+ */
+export function currentStreakDates(
+  days: ContributionDay[],
+  today: string = localTodayISO(),
+): string[] {
   const sorted = sortByDate(days);
-  let streak = 0;
+  const dates: string[] = [];
   for (let i = sorted.length - 1; i >= 0; i--) {
     const day = sorted[i]!;
     if (day.date > today) continue; // calendar includes the rest of this week
-    if (day.count > 0) streak++;
+    if (day.count > 0) dates.push(day.date);
     else if (day.date === today)
       continue; // today is still in play
     else break;
   }
-  return streak;
+  return dates.reverse();
 }
 
 // --- helpers ---

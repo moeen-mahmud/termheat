@@ -3,6 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev:self": "bun run index.ts moeen-mahmud"
+  },
   "devDependencies": {
     "@types/node": "latest",
     "@types/bun": "latest",

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   currentStreak,
+  currentStreakDates,
   daysSinceLastContribution,
   longestStreak,
   totalContributions,
@@ -87,6 +88,39 @@ describe("currentStreak (lenient: today is in play until midnight)", () => {
   test("is 0 when nothing was ever contributed", () => {
     expect(currentStreak(makeDays("2026-07-01", [0, 0, 0]), "2026-07-03")).toBe(
       0,
+    );
+  });
+});
+
+describe("currentStreakDates", () => {
+  test("returns the streak's dates oldest → newest", () => {
+    const days = makeDays("2026-07-01", [0, 1, 2, 5]); // active Jul 2–4
+    expect(currentStreakDates(days, "2026-07-04")).toEqual([
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-04",
+    ]);
+  });
+
+  test("excludes an empty in-play today but keeps the days behind it", () => {
+    const days = makeDays("2026-07-01", [1, 1, 1, 0]); // empty today Jul 4
+    expect(currentStreakDates(days, "2026-07-04")).toEqual([
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+    ]);
+  });
+
+  test("is empty once the streak is broken", () => {
+    expect(
+      currentStreakDates(makeDays("2026-07-01", [1, 1, 0, 0]), "2026-07-04"),
+    ).toEqual([]);
+  });
+
+  test("agrees with currentStreak", () => {
+    const days = makeDays("2026-07-01", [1, 0, 1, 1, 9]);
+    expect(currentStreakDates(days, "2026-07-05")).toHaveLength(
+      currentStreak(days, "2026-07-05"),
     );
   });
 });

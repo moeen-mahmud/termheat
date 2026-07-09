@@ -2,25 +2,40 @@
 // static render. Replaced by src/index.tsx + Ink components in Day 2.
 //   bun run index.ts <github-username>
 
-import { fetchContributions, GitHubError } from "./src/github";
-import { buildHeatmap } from "./src/heatmap";
+import { fetchContributions, GitHubError } from "@/github";
+import { buildHeatmap } from "@/heatmap";
 import {
-  currentStreak,
+  CHARS,
+  COLORS,
+  FIRE,
+  MONTHS,
+  RESET,
+  WEEKDAY_LABELS,
+} from "@/lib/const";
+import type { Week } from "@/lib/types";
+import {
+  currentStreakDates,
   daysSinceLastContribution,
   longestStreak,
   totalContributions,
-} from "./src/streak";
+} from "@/streak";
 
-const CHARS = ["░░", "▒▒", "▓▓", "██", "██"] as const;
-const COLORS = [
-  "\x1b[38;5;238m", // 0: dim gray
-  "\x1b[38;5;22m", //  1: deep green
-  "\x1b[38;5;28m", //  2
-  "\x1b[38;5;40m", //  3
-  "\x1b[1;38;5;46m", // 4: bright green, bold
-] as const;
-const RESET = "\x1b[0m";
-const WEEKDAY_LABELS = ["   ", "Mon", "   ", "Wed", "   ", "Fri", "   "];
+/** Month names positioned over the week (column) where each month begins. */
+function monthLabelRow(weeks: Week[]): string {
+  const slots = Array<string>(weeks.length * 2).fill(" ");
+  let lastMonth = -1;
+  weeks.forEach((week, i) => {
+    const first = week.find((cell) => cell !== null);
+    if (!first) return;
+    const month = Number(first.date.slice(5, 7)) - 1;
+    if (month === lastMonth) return;
+    lastMonth = month;
+    const label = MONTHS[month]!;
+    if (i * 2 + label.length > slots.length) return; // no room at the right edge
+    for (let j = 0; j < label.length; j++) slots[i * 2 + j] = label[j]!;
+  });
+  return slots.join("");
+}
 
 const username = process.argv[2];
 if (!username) {
@@ -32,18 +47,30 @@ try {
   const days = await fetchContributions(username);
   const heatmap = buildHeatmap(days);
 
+  const streakDates = currentStreakDates(days);
+  const fireFor = new Map(
+    streakDates.map((date, i) => [
+      date,
+      FIRE[Math.floor((i / streakDates.length) * FIRE.length)]!,
+    ]),
+  );
+
   console.log(`\n  🔥 termheat — ${username}\n`);
+  console.log(`      ${monthLabelRow(heatmap.weeks)}`);
   for (let weekday = 0; weekday < 7; weekday++) {
     const row = heatmap.weeks
       .map((week) => {
         const cell = week[weekday];
-        return cell
-          ? `${COLORS[cell.level]}${CHARS[cell.level]}${RESET}`
-          : "  ";
+        if (!cell) return "  ";
+        const color = fireFor.get(cell.date) ?? COLORS[cell.level];
+        return `${color}${CHARS[cell.level]}${RESET}`;
       })
       .join("");
     console.log(`  ${WEEKDAY_LABELS[weekday]} ${row}`);
   }
+
+  const legend = COLORS.map((c, i) => `${c}${CHARS[i]}${RESET}`).join(" ");
+  console.log(`\n      Less ${legend} More`);
 
   console.log(`\n  Total this year:  ${totalContributions(days)}`);
   console.log(`  Longest streak:   ${longestStreak(days)} days`);
@@ -51,7 +78,7 @@ try {
   console.log(
     `  Last contributed: ${idle === null ? "never 😶" : idle === 0 ? "today" : `${idle} day(s) ago`}`,
   );
-  console.log(`  Current streak:   🔥 ${currentStreak(days)} days\n`);
+  console.log(`  Current streak:   🔥 ${streakDates.length} days\n`);
 } catch (err) {
   if (err instanceof GitHubError) {
     console.error(`termheat: ${err.message}`);
