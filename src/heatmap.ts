@@ -1,3 +1,4 @@
+import { MONTHS } from "@/lib/const";
 import type { ContributionDay, Heatmap, Level, Week } from "@/lib/types";
 
 /**
@@ -39,4 +40,31 @@ export function buildHeatmap(days: ContributionDay[]): Heatmap {
 /** 0 = Sunday … 6 = Saturday, computed in UTC to match GitHub's date strings. */
 export function dayOfWeek(isoDate: string): number {
   return new Date(`${isoDate}T00:00:00Z`).getUTCDay();
+}
+
+/**
+ * A header string with month names positioned over the week (column) where
+ * each month first appears. Each week column is `cellWidth` characters wide.
+ * A label is dropped if it would collide with the previous one (possible when
+ * a month spans a single week column); the final label may spill past the
+ * grid's right edge, which is harmless in a header row.
+ */
+export function monthLabelRow(weeks: Week[], cellWidth = 2): string {
+  const slots = Array<string>(weeks.length * cellWidth).fill(" ");
+  let lastMonth = -1;
+  let nextFree = 0;
+  weeks.forEach((week, i) => {
+    const first = week.find((cell) => cell !== null);
+    if (!first) return;
+    const month = Number(first.date.slice(5, 7)) - 1;
+    if (month === lastMonth) return;
+    lastMonth = month;
+    const label = MONTHS[month]!;
+    const start = i * cellWidth;
+    if (start < nextFree) return;
+    while (slots.length < start + label.length) slots.push(" ");
+    for (let j = 0; j < label.length; j++) slots[start + j] = label[j]!;
+    nextFree = start + label.length + 1;
+  });
+  return slots.join("");
 }

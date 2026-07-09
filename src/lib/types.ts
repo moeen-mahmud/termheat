@@ -26,3 +26,15 @@ export interface Heatmap {
  * The name of a color theme, as defined in `src/lib/const.ts`.
  */
 export type ThemeName = (typeof THEMES)[number];
+
+/**
+ * A color theme. All colors are `#rrggbb` hex — Ink's `<Text color>` renders
+ * them as truecolor, and hex supports brightness math (see `scaleHex`).
+ */
+export interface Theme {
+  name: ThemeName;
+  /** Cell color per intensity level; index 0 is the empty-day dot. */
+  levels: readonly [string, string, string, string, string];
+  /** Accent for the title and streak stat. */
+  accent: string;
+}

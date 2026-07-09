@@ -1,10 +1,12 @@
 {
   "name": "termheat",
-  "module": "index.ts",
+  "version": "0.1.0",
+  "module": "src/index.tsx",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev:self": "bun run index.ts moeen-mahmud"
+    "dev": "bun run src/index.tsx",
+    "dev:self": "bun run src/index.tsx moeen-mahmud"
   },
   "devDependencies": {
     "@types/node": "latest",

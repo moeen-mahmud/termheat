@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildHeatmap, dayOfWeek, levelFor } from "@/heatmap";
+import { buildHeatmap, dayOfWeek, levelFor, monthLabelRow } from "@/heatmap";
 import type { ContributionDay } from "@/lib/types";
 
 function makeDays(startISO: string, counts: number[]): ContributionDay[] {
@@ -53,5 +53,34 @@ describe("dayOfWeek", () => {
   test("uses UTC so cells land in GitHub's columns regardless of local tz", () => {
     expect(dayOfWeek("2026-06-28")).toBe(0); // Sunday
     expect(dayOfWeek("2026-07-04")).toBe(6); // Saturday
+  });
+});
+
+describe("monthLabelRow", () => {
+  test("places each month name over the week where it first appears", () => {
+    // 5 weeks from Sunday 2026-06-07: Jun weeks 0–3, Jul starts week 4
+    const heatmap = buildHeatmap(makeDays("2026-06-07", Array(35).fill(1)));
+    const row = monthLabelRow(heatmap.weeks);
+    expect(row.startsWith("Jun")).toBe(true);
+    expect(row.indexOf("Jul")).toBe(8); // week 4 × cellWidth 2
+  });
+
+  test("drops a label that would collide with the previous one", () => {
+    // Jun gets only week 0, so Jul's label (week 1, slot 2) would overwrite
+    // Jun's third letter — Jul is dropped rather than rendering "JuJul".
+    const heatmap = buildHeatmap(makeDays("2026-06-28", Array(21).fill(1)));
+    expect(monthLabelRow(heatmap.weeks)).toBe("Jun   ");
+  });
+
+  test("a label in the last column spills past the edge instead of vanishing", () => {
+    // 5 weeks from Sunday 2026-06-07: Jul leads the final column (slot 8),
+    // and its 3 chars exceed the 10-slot grid width by 1.
+    const heatmap = buildHeatmap(makeDays("2026-06-07", Array(35).fill(1)));
+    expect(monthLabelRow(heatmap.weeks)).toBe("Jun     Jul");
+  });
+
+  test("respects a custom cell width", () => {
+    const heatmap = buildHeatmap(makeDays("2026-06-07", Array(35).fill(1)));
+    expect(monthLabelRow(heatmap.weeks, 3).indexOf("Jul")).toBe(12);
   });
 });
