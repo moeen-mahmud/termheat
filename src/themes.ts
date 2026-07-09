@@ -1,4 +1,5 @@
-import type { Theme, ThemeName } from "@/lib/types";
+import type { Theme } from "@/lib/schema";
+import type { ThemeName } from "@/lib/types";
 
 /**
  * Current-streak cells burn in this ramp regardless of theme (user decision:

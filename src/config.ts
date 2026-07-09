@@ -1,14 +1,14 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { THEMES } from "@/lib/const";
+import { APP_NAME, THEMES } from "@/lib/const";
 import type { TermheatConfig } from "@/lib/schema";
 import type { ThemeName } from "@/lib/types";
 
 export class ConfigError extends Error {}
 
 export function configPath(): string {
-  return join(homedir(), ".termheat.json");
+  return join(homedir(), `.${APP_NAME}.json`);
 }
 
 /**

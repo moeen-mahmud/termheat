@@ -13,6 +13,7 @@ export function shameLine(idleDays: number | null): string | null {
   // does it escalate, is a fresh streak *praised*? (PLAN.md's example was
   // "🐌 You haven't pushed in 3 days".)
   if (idleDays === null) return "🐌 No contributions this year… yet.";
-  if (idleDays >= 1) return `🐌 You haven't pushed in ${idleDays} day${idleDays === 1 ? "" : "s"}`;
+  if (idleDays >= 1)
+    return `🐌 You haven't pushed in ${idleDays} day${idleDays === 1 ? "" : "s"}`;
   return null;
 }

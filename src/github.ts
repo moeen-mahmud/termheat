@@ -40,7 +40,7 @@ async function fetchViaGraphQL(
   );
   if (res.status === 401) {
     throw new GitHubError(
-      "GitHub rejected the token (401). Check GITHUB_TOKEN, or unset it to use tokenless mode.",
+      `GitHub rejected the token (${res.status}). Check GITHUB_TOKEN, or unset it to use tokenless mode.`,
     );
   }
   if (!res.ok) {

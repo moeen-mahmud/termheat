@@ -1,22 +1,20 @@
 import { Box, Text } from "ink";
 import { monthLabelRow } from "@/heatmap";
 import { revealProgress } from "@/hooks/useAnimation";
-import type { AnimationFrame } from "@/hooks/useAnimation";
-import { CHARS, WEEKDAY_LABELS } from "@/lib/const";
-import type { Heatmap as HeatmapData, Theme } from "@/lib/types";
+import {
+  ANIMATION_BREATHE_EXP_LEFT,
+  ANIMATION_BREATHE_EXP_RIGHT,
+  CHARS,
+  DEFAULT_CELL_LEVELS,
+  FLICKER_FREQUENCY,
+  FLICKER_LEFT,
+  FLICKER_PHASE_OFFSET,
+  FLICKER_RIGHT,
+  WEEKDAY_LABELS,
+  WEEKDAYS,
+} from "@/lib/const";
 import { FIRE_RAMP, scaleHex } from "@/themes";
-
-interface HeatmapProps {
-  heatmap: HeatmapData;
-  theme: Theme;
-  /** Dates of the current streak, oldest → newest (see currentStreakDates). */
-  streakDates: string[];
-  anim: AnimationFrame;
-  /** Tick at which the current data arrived; null = no wipe (static render). */
-  revealFrom: number | null;
-}
-
-const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+import type { HeatmapProps } from "@/lib/schema";
 
 export function Heatmap({
   heatmap,
@@ -29,7 +27,8 @@ export function Heatmap({
   const reveal =
     revealFrom === null ? 1 : revealProgress(anim.tick, revealFrom);
   // Whole grid gently breathes between 72% and 100% brightness.
-  const breathe = 0.72 + 0.28 * anim.breathe;
+  const breathe =
+    ANIMATION_BREATHE_EXP_LEFT + ANIMATION_BREATHE_EXP_RIGHT * anim.breathe;
   const streakIndex = new Map(streakDates.map((date, i) => [date, i]));
 
   return (
@@ -44,9 +43,10 @@ export function Heatmap({
             if (!cell || w / weeks.length > reveal)
               return <Text key={cell?.date ?? `pad-${w}`}>{"  "}</Text>;
 
-            const fire = cell.count > 0 ? streakIndex.get(cell.date) : undefined;
+            const fire =
+              cell.count > 0 ? streakIndex.get(cell.date) : undefined;
             let color: string;
-            let bold = cell.level === 4;
+            let bold = cell.level === DEFAULT_CELL_LEVELS[4]; // bold the darkest level by default
             if (fire !== undefined) {
               // Streak cells shimmer independently, phase-offset per cell.
               const ramp =
@@ -54,10 +54,14 @@ export function Heatmap({
                   Math.floor((fire / streakDates.length) * FIRE_RAMP.length)
                 ]!;
               const flicker =
-                0.78 + 0.22 * Math.sin(anim.tick * 0.9 + fire * 1.1);
+                FLICKER_LEFT +
+                FLICKER_RIGHT *
+                  Math.sin(
+                    anim.tick * FLICKER_FREQUENCY + fire * FLICKER_PHASE_OFFSET,
+                  );
               color = scaleHex(ramp, flicker);
               bold = true;
-            } else if (cell.level === 0) {
+            } else if (cell.level === DEFAULT_CELL_LEVELS[0]) {
               color = theme.levels[0]; // empty dots don't breathe
             } else {
               color = scaleHex(theme.levels[cell.level], breathe);

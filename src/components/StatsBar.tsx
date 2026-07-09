@@ -1,23 +1,11 @@
 import { Box, Text } from "ink";
 import { shameLine } from "@/lib/shame";
-import type { ContributionDay, Theme } from "@/lib/types";
 import {
   daysSinceLastContribution,
   longestStreak,
   totalContributions,
 } from "@/streak";
-
-interface StatsBarProps {
-  days: ContributionDay[];
-  streakLength: number;
-  theme: Theme;
-  shame: boolean;
-  watch: boolean;
-  refreshMinutes: number;
-  /** True while a background refetch is in flight. */
-  refreshing: boolean;
-  interactive: boolean;
-}
+import type { StatsBarProps } from "@/lib/schema";
 
 export function StatsBar({
   days,
@@ -37,10 +25,10 @@ export function StatsBar({
   return (
     <Box flexDirection="column" marginTop={1} marginLeft={2}>
       <Text>
-        Total this year:  <Text bold>{totalContributions(days)}</Text>
+        Total this year: <Text bold>{totalContributions(days)}</Text>
       </Text>
       <Text>
-        Longest streak:   <Text bold>{longestStreak(days)} days</Text>
+        Longest streak: <Text bold>{longestStreak(days)} days</Text>
       </Text>
       <Text>Last contributed: {lastContributed}</Text>
       <Text>
@@ -57,7 +45,7 @@ export function StatsBar({
       {interactive && (
         <Box marginTop={1}>
           <Text dimColor>
-            [q] quit  [r] refresh
+            [q] quit [r] refresh
             {watch && `  ⟳ auto-refresh every ${refreshMinutes}m`}
             {refreshing && "  · refreshing…"}
           </Text>

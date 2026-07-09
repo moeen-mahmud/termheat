@@ -1,15 +1,6 @@
+import { BREATHE_SECONDS, FPS, REVEAL_SECONDS } from "@/lib/const";
+import type { AnimationFrame } from "@/lib/schema";
 import { useEffect, useState } from "react";
-
-export const FPS = 8;
-const REVEAL_SECONDS = 2;
-const BREATHE_SECONDS = 4;
-
-export interface AnimationFrame {
-  /** Monotonic frame counter — the single source all effects derive from. */
-  tick: number;
-  /** 0..1 whole-grid brightness cycle (sine, ~4s period). */
-  breathe: number;
-}
 
 /**
  * Drives all animation from one interval. When disabled (non-TTY, or before

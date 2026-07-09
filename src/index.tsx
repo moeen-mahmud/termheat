@@ -1,36 +1,15 @@
 import { render } from "ink";
 import { App } from "@/components/App";
 import { ConfigError, configPath, loadConfig } from "@/config";
-import { parseArgs } from "@/lib/args";
-import { THEMES, VERSION } from "@/lib/const";
+import { HELP, parseArgs } from "@/lib/args";
+import { APP_NAME, APP_VERSION, DEFAULT_THEME } from "@/lib/const";
 import type { TermheatConfig } from "@/lib/schema";
 import { themeFor } from "@/themes";
-
-const HELP = `
-  🔥 termheat — animated terminal heatmap of your GitHub contributions
-
-  Usage: termheat [username] [options]
-
-  Options:
-    -u, --username <name>   GitHub username (or set it in ~/.termheat.json)
-    -w, --watch             Auto-refresh (default: every 5 minutes)
-    -t, --theme <theme>     Color theme: ${THEMES.join(" | ")}
-    -s, --shame             Enable gentle shame mode
-    -c, --config            Show config file path and contents
-    -h, --help              Show this help
-    --version               Show version
-
-  Examples:
-    npx termheat moeen-mahmud
-    npx termheat moeen-mahmud --watch --theme fire --shame
-
-  Tip: set GITHUB_TOKEN for exact counts via the GraphQL API.
-`;
 
 const args = parseArgs(process.argv.slice(2));
 
 if (args.errors.length > 0) {
-  for (const error of args.errors) console.error(`termheat: ${error}`);
+  for (const error of args.errors) console.error(`${APP_NAME}: ${error}`);
   console.error(HELP);
   process.exit(1);
 }
@@ -39,7 +18,7 @@ if (args.help) {
   process.exit(0);
 }
 if (args.version) {
-  console.log(VERSION);
+  console.log(APP_VERSION);
   process.exit(0);
 }
 
@@ -48,7 +27,7 @@ try {
   config = await loadConfig();
 } catch (err) {
   if (err instanceof ConfigError) {
-    console.error(`termheat: ${err.message}`);
+    console.error(`${APP_NAME}: ${err.message}`);
     process.exit(1);
   }
   throw err;
@@ -63,7 +42,7 @@ if (args.config) {
 // Precedence: flags > ~/.termheat.json > defaults.
 const username = args.username ?? config.username;
 if (!username) {
-  console.error("termheat: no username — pass one or set it in the config");
+  console.error(`${APP_NAME}: no username — pass one or set it in the config`);
   console.error(HELP);
   process.exit(1);
 }
@@ -71,7 +50,7 @@ if (!username) {
 const { waitUntilExit } = render(
   <App
     username={username}
-    theme={themeFor(args.theme ?? config.theme ?? "github")}
+    theme={themeFor(args.theme ?? config.theme ?? DEFAULT_THEME)}
     watch={args.watch}
     refreshMinutes={config.refreshMinutes ?? 5}
     shame={args.shame || config.shame === true}

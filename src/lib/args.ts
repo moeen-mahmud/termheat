@@ -1,17 +1,28 @@
-import { THEMES } from "@/lib/const";
+import { CommandMaps } from "@/lib/commands";
+import { APP_NAME, APP_VERSION, THEMES } from "@/lib/const";
+import type { CliArgs } from "@/lib/schema";
 import type { ThemeName } from "@/lib/types";
 
-export interface CliArgs {
-  username?: string;
-  theme?: ThemeName;
-  watch: boolean;
-  shame: boolean;
-  config: boolean;
-  help: boolean;
-  version: boolean;
-  /** Human-readable problems; if non-empty the CLI prints them and exits 1. */
-  errors: string[];
-}
+export const HELP = `
+  🔥 ${APP_NAME} v${APP_VERSION} — animated terminal heatmap of your GitHub contributions
+
+  Usage: ${APP_NAME} [username] [options]
+
+  Options:
+    ${CommandMaps.username.short}, ${CommandMaps.username.long} <name>   GitHub username (or set it in ~/.${APP_NAME}.json)
+    ${CommandMaps.watch.short}, ${CommandMaps.watch.long}             Auto-refresh (default: every 5 minutes)
+    ${CommandMaps.theme.short}, ${CommandMaps.theme.long} <theme>     Color theme: ${THEMES.join(" | ")}
+    ${CommandMaps.shame.short}, ${CommandMaps.shame.long}             Enable gentle shame mode
+    ${CommandMaps.config.short}, ${CommandMaps.config.long}            Show config file path and contents
+    ${CommandMaps.help.short}, ${CommandMaps.help.long}              Show this help
+    ${CommandMaps.version.short}, ${CommandMaps.version.long}               Show version
+
+  Examples:
+    npx ${APP_NAME} moeen-mahmud
+    npx ${APP_NAME} moeen-mahmud --watch --theme fire --shame
+
+  Tip: set GITHUB_TOKEN for exact counts via the GraphQL API.
+`;
 
 /**
  * Parses argv (already stripped of the runtime and script entries). Kept as a
@@ -30,34 +41,35 @@ export function parseArgs(argv: string[]): CliArgs {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
     switch (arg) {
-      case "-h":
-      case "--help":
+      case CommandMaps.help.short:
+      case CommandMaps.help.long:
         args.help = true;
         break;
-      case "--version":
+      case CommandMaps.version.short:
+      case CommandMaps.version.long:
         args.version = true;
         break;
-      case "-w":
-      case "--watch":
+      case CommandMaps.watch.short:
+      case CommandMaps.watch.long:
         args.watch = true;
         break;
-      case "-s":
-      case "--shame":
+      case CommandMaps.shame.short:
+      case CommandMaps.shame.long:
         args.shame = true;
         break;
-      case "-c":
-      case "--config":
+      case CommandMaps.config.short:
+      case CommandMaps.config.long:
         args.config = true;
         break;
-      case "-u":
-      case "--username": {
+      case CommandMaps.username.short:
+      case CommandMaps.username.long: {
         const value = argv[++i];
         if (value) args.username = value;
         else args.errors.push(`${arg} needs a value`);
         break;
       }
-      case "-t":
-      case "--theme": {
+      case CommandMaps.theme.short:
+      case CommandMaps.theme.long: {
         const value = argv[++i];
         if (value && THEMES.includes(value as ThemeName)) {
           args.theme = value as ThemeName;

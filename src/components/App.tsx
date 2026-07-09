@@ -5,18 +5,19 @@ import { StatsBar } from "@/components/StatsBar";
 import { fetchContributions, GitHubError } from "@/github";
 import { buildHeatmap } from "@/heatmap";
 import { useAnimation } from "@/hooks/useAnimation";
-import type { ContributionDay, Theme } from "@/lib/types";
+import type { ContributionDay } from "@/lib/types";
 import { currentStreakDates } from "@/streak";
-
-export interface AppProps {
-  username: string;
-  theme: Theme;
-  watch: boolean;
-  refreshMinutes: number;
-  shame: boolean;
-}
-
-const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
+import {
+  APP_NAME,
+  APP_VERSION,
+  COLUMN_WIDTH,
+  DEFAULT_REFRESH_INTERVAL_SECONDS,
+  SPINNER,
+  STD_OUT_COLUMNS,
+  VISIBLE_HEATMAP_COLUMNS_MIN,
+  VISIBLE_HEATMAP_FIT,
+} from "@/lib/const";
+import type { AppProps } from "@/lib/schema";
 
 export function App({
   username,
@@ -60,7 +61,10 @@ export function App({
 
   useEffect(() => {
     if (!watch) return;
-    const id = setInterval(() => void load(), refreshMinutes * 60_000);
+    const id = setInterval(
+      () => void load(),
+      refreshMinutes * DEFAULT_REFRESH_INTERVAL_SECONDS,
+    );
     return () => clearInterval(id);
   }, [watch, refreshMinutes, load]);
 
@@ -94,7 +98,7 @@ export function App({
   // Responsive width: show as many *recent* weeks as the terminal fits
   // (6-char row label + 2 chars per week + 1 spill char for month labels).
   const { stdout } = useStdout();
-  const [columns, setColumns] = useState(stdout?.columns ?? 80);
+  const [columns, setColumns] = useState(stdout?.columns ?? STD_OUT_COLUMNS);
   useEffect(() => {
     if (!stdout) return;
     const onResize = () => setColumns(stdout.columns ?? 80);
@@ -103,7 +107,10 @@ export function App({
   }, [stdout]);
   const visibleHeatmap = useMemo(() => {
     if (!heatmap) return null;
-    const fit = Math.max(4, Math.floor((columns - 7) / 2));
+    const fit = Math.max(
+      VISIBLE_HEATMAP_FIT,
+      Math.floor((columns - VISIBLE_HEATMAP_COLUMNS_MIN) / COLUMN_WIDTH),
+    );
     if (heatmap.weeks.length <= fit) return heatmap;
     return { ...heatmap, weeks: heatmap.weeks.slice(-fit) };
   }, [heatmap, columns]);
@@ -112,7 +119,7 @@ export function App({
     <Box flexDirection="column" paddingY={1}>
       <Box marginLeft={2} marginBottom={1}>
         <Text bold color={theme.accent}>
-          🔥 termheat
+          🔥 {APP_NAME} v{APP_VERSION}
         </Text>
         <Text> — {username}</Text>
       </Box>

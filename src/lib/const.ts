@@ -1,9 +1,14 @@
+import { version } from "../../package.json";
+
 // --- Constants used throughout the project. ---
 
-/** Keep in sync with package.json when cutting a release. */
-export const VERSION = "0.1.0";
+export const APP_NAME = "termheat";
+
+export const APP_VERSION = version;
 
 export const THEMES = ["github", "fire", "ocean", "mono"] as const;
+
+export const DEFAULT_THEME = "github" as const;
 
 export const GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 
@@ -17,3 +22,36 @@ export const WEEKDAY_LABELS = ["   ", "Mon", "   ", "Wed", "   ", "Fri", "   "];
 export const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(
   " ",
 );
+
+export const SPINNER = [
+  "⠋",
+  "⠙",
+  "⠹",
+  "⠸",
+  "⠼",
+  "⠴",
+  "⠦",
+  "⠧",
+  "⠇",
+  "⠏",
+] as const;
+
+export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+export const FPS = 8;
+export const ANIMATION_BREATHE_EXP_LEFT = 0.72; // 72% brightness at the left of the sine wave
+export const ANIMATION_BREATHE_EXP_RIGHT = 0.28; // 100% brightness at the right of the sine wave
+export const FLICKER_LEFT = 0.78; // 78% brightness at the left of the sine wave
+export const FLICKER_RIGHT = 0.22; // 100% brightness at the right of the sine wave
+export const FLICKER_FREQUENCY = 0.9; // flicker frequency in Hz
+export const FLICKER_PHASE_OFFSET = 1.1; // phase offset for flicker in radians
+
+export const DEFAULT_CELL_LEVELS = [0, 1, 2, 3, 4] as const;
+
+export const REVEAL_SECONDS = 2;
+export const BREATHE_SECONDS = 4;
+export const STD_OUT_COLUMNS = 80;
+export const DEFAULT_REFRESH_INTERVAL_SECONDS = 60_000;
+export const VISIBLE_HEATMAP_COLUMNS_MIN = 7;
+export const VISIBLE_HEATMAP_FIT = 4; // minimum number of weeks to show when fitting to terminal width
+export const COLUMN_WIDTH = 2; // two chars per day, no padding
