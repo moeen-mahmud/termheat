@@ -43,17 +43,27 @@ termheat/
 ├── tsconfig.json
 ├── src/
 │   ├── index.tsx         # Entry point, CLI arg parsing, render(<App />)
-│   ├── github.ts         # GitHub GraphQL client
+│   ├── github.ts         # GitHub client (GraphQL + no-auth HTML transports)
 │   ├── heatmap.ts        # Contribution data → grid layout
 │   ├── streak.ts         # Streak calculation logic
 │   ├── config.ts         # ~/.termheat.json read/write
 │   ├── themes.ts         # Color themes (GitHub green, fire, ocean, mono, etc.)
+│   ├── lib/              # Shared plumbing, one concern per file
+│   │   ├── types.ts      # Domain types (ContributionDay, Heatmap, Level…)
+│   │   ├── const.ts      # Endpoints, THEMES list
+│   │   ├── schema.ts     # TermheatConfig shape
+│   │   ├── env.ts        # Environment reads (GITHUB_TOKEN)
+│   │   ├── query.ts      # GraphQL documents
+│   │   └── api-instance.ts  # Thin fetch wrapper (returns raw Response)
+│   ├── test/             # *.test.ts — all bun test suites
 │   ├── components/
 │   │   ├── App.tsx       # Root: data fetching, watch mode, useInput ([q]/[r])
 │   │   ├── Heatmap.tsx   # Grid → <Box>/<Text> cells
 │   │   └── StatsBar.tsx  # Streak counter, totals, shame mode line
 │   └── hooks/
 │       └── useAnimation.ts  # Frame timing, pulse/breathe effects
+
+Imports go through the `@/` path alias (→ `src/`), not relative `../` paths.
 ├── bin/
 │   └── termheat          # Shebang entry point
 └── README.md
@@ -104,7 +114,10 @@ query ($username: String!) {
 }
 ```
 
-No auth required for public profiles. Just pass the username.
+**Reality check (Day 1):** the GraphQL API requires a token — it 401s unauthenticated.
+So `github.ts` uses two transports: GraphQL when `GITHUB_TOKEN` is set (exact counts),
+and GitHub's public HTML calendar fragment (`github.com/users/<name>/contributions`)
+as the zero-auth default. Same output shape either way.
 
 ---
 

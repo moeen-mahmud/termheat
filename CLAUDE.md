@@ -37,7 +37,15 @@ github.ts        fetch contribution days (last 365) via GraphQL
    → <Heatmap />      grid → <Box>/<Text> cells (components/, .tsx)
 ```
 
-Keep `github.ts`, `heatmap.ts`, and `streak.ts` as pure TypeScript with no Ink/React imports — they take data in and return data out, so they stay unit-testable with `bun test` without rendering. Components live in `src/components/`, hooks in `src/hooks/`. Supporting modules: `config.ts` (`~/.termheat.json` I/O), `themes.ts` (github/fire/ocean/mono color scales), `src/index.tsx` (CLI arg parsing, `render(<App />)`). A `bin/termheat` shebang entry point handles npm distribution. When creating these files, follow this structure rather than growing the root `index.ts`.
+Keep `github.ts`, `heatmap.ts`, and `streak.ts` as pure TypeScript with no Ink/React imports — they take data in and return data out, so they stay unit-testable with `bun test` without rendering. Components live in `src/components/`, hooks in `src/hooks/`.
+
+Layout conventions:
+
+- **`src/lib/`** holds shared plumbing, one concern per file: `types.ts` (domain types), `const.ts` (endpoints, `THEMES`), `schema.ts` (`TermheatConfig` shape), `env.ts` (environment reads), `query.ts` (GraphQL documents), `api-instance.ts` (thin fetch wrapper). `apiInstance` intentionally returns the raw `Response` without throwing on non-2xx — status codes are semantic (404 → `UserNotFoundError`, 401 → token hint) and body decoding differs per transport (`.json()` vs `.text()`), so both belong to the caller in `github.ts`.
+- **Tests live in `src/test/*.test.ts`**, not next to sources.
+- **Import through the `@/` alias** (maps to `src/`, see tsconfig `paths`) — no `../` relative imports between modules.
+
+Supporting modules: `config.ts` (`~/.termheat.json` I/O), `themes.ts` (github/fire/ocean/mono color scales), `src/index.tsx` (CLI arg parsing, `render(<App />)`). A `bin/termheat` shebang entry point handles npm distribution. When creating these files, follow this structure rather than growing the root `index.ts`.
 
 CLI flags, contribution-level → character/color mapping, and the box-drawing layout are all specified in PLAN.md — treat it as the spec.
 

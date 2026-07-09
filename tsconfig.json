@@ -2,6 +2,7 @@
   "compilerOptions": {
     // Environment setup & latest features
     "lib": ["ESNext"],
+    "types": ["bun"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -24,6 +25,11 @@
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    // Path aliases
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }
