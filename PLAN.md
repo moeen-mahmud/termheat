@@ -28,8 +28,7 @@ A full-screen terminal app that renders your GitHub contribution graph as a live
 | ------------ | -------------------------------------------------------------- | ------------------------------------------------ |
 | Runtime      | **Bun**                                                        | Fast startup, built-in TS support, single binary |
 | CLI          | **Bun CLI** (no framework)                                     | Simple, no deps                                  |
-| Rendering    | **Bare terminal** (ANSI escape codes + `process.stdout.write`) | Zero dependencies, full terminal control         |
-| Or:          | **Blessed/Cursed** or **Ink** (React for terminal)             | If you want a richer rendering layer             |
+| Rendering    | **Ink** (React for the terminal)                               | Declarative components, flexbox layout, hooks for animation, `useInput` for keys |
 | API          | **GitHub GraphQL** (`api.github.com/graphql`)                  | Contributions data is only available via GraphQL |
 | Config       | `~/.termheat.json`                                             | Store GitHub username, theme, refresh interval   |
 | Distribution | **npm** (`npx termheat`)                                       | Zero-install for users                           |
@@ -43,14 +42,18 @@ termheat/
 ├── package.json
 ├── tsconfig.json
 ├── src/
-│   ├── index.ts          # Entry point, CLI arg parsing
+│   ├── index.tsx         # Entry point, CLI arg parsing, render(<App />)
 │   ├── github.ts         # GitHub GraphQL client
-│   ├── renderer.ts       # Terminal rendering engine
 │   ├── heatmap.ts        # Contribution data → grid layout
-│   ├── animation.ts      # Frame timing, pulse effects
-│   ├── config.ts         # ~/.termheat.json read/write
 │   ├── streak.ts         # Streak calculation logic
-│   └── themes.ts         # Color themes (GitHub green, fire, ocean, mono, etc.)
+│   ├── config.ts         # ~/.termheat.json read/write
+│   ├── themes.ts         # Color themes (GitHub green, fire, ocean, mono, etc.)
+│   ├── components/
+│   │   ├── App.tsx       # Root: data fetching, watch mode, useInput ([q]/[r])
+│   │   ├── Heatmap.tsx   # Grid → <Box>/<Text> cells
+│   │   └── StatsBar.tsx  # Streak counter, totals, shame mode line
+│   └── hooks/
+│       └── useAnimation.ts  # Frame timing, pulse/breathe effects
 ├── bin/
 │   └── termheat          # Shebang entry point
 └── README.md
@@ -63,17 +66,19 @@ termheat/
 ```
 GitHub GraphQL API
        ↓
-   github.ts     →  Fetches contribution days (last 365 days)
+   github.ts        →  Fetches contribution days (last 365 days)
        ↓
-   heatmap.ts    →  Converts to a 53-week × 7-day grid + contribution levels (0–4)
+   heatmap.ts       →  Converts to a 53-week × 7-day grid + contribution levels (0–4)
        ↓
-   streak.ts     →  Calculates current streak, longest streak, total commits
+   streak.ts        →  Calculates current streak, longest streak, total commits
        ↓
-   renderer.ts   →  Renders grid → ANSI escape codes
+   <App />          →  Holds data as state, refetches in watch mode
        ↓
-   animation.ts  →  Wraps render in animation loop (frame timing)
+   useAnimation     →  Drives frame state (pulse phase, breathe brightness)
        ↓
-   Terminal      →  stdout
+   <Heatmap />      →  Grid → Ink <Box>/<Text> components
+       ↓
+   Ink reconciler   →  Diffs and writes to stdout
 ```
 
 ---
@@ -189,7 +194,7 @@ Examples:
 
 ### Day 1 (tonight)
 
-1. Scaffold project: `bun init`, package.json, tsconfig
+1. Scaffold project: `bun init`, `bun add ink react` + `bun add -d @types/react`, tsconfig
 2. `github.ts` — GraphQL query, fetch, parse
 3. `heatmap.ts` — Grid computation (53×7)
 4. `streak.ts` — Streak calculation
@@ -197,16 +202,16 @@ Examples:
 
 ### Day 2 (tomorrow)
 
-6. `renderer.ts` — ANSI escape rendering (grid, text, counters)
-7. `animation.ts` — Animation loop with `setInterval`/`requestAnimationFrame` equivalent for terminal
+6. `components/Heatmap.tsx` + `components/StatsBar.tsx` — grid and counters as Ink components
+7. `hooks/useAnimation.ts` — frame state via `useState` + `setInterval` (pulse, breathe)
 8. `themes.ts` — 3–4 themes
-9. `index.ts` — CLI wiring, arg parsing
-10. Polish: resize handling, Ctrl+C cleanup, error states
+9. `index.tsx` — CLI wiring, arg parsing, `render(<App />)`
+10. Polish: `useInput` for [q]/[r], watch-mode refetch, error states (Ink handles resize + Ctrl+C cleanup)
 
 ### Day 3
 
 11. npm publish, README, demo GIF
-12. `bun run build && npm publish`
+12. `bun build src/index.tsx --target=node --outdir=dist` (npx users run under Node, not Bun) → `npm publish`
 
 ---
 
@@ -224,7 +229,7 @@ Package: `termheat` on npm.
 
 ## What Makes This Special
 
-- **Zero dependencies** — pure TS, no npm bloat
+- **Lean** — just Ink + React, nothing else. Declarative UI without npm bloat
 - **Beautiful** — people expect terminals to be ugly. Aesthetic heatmap animation surprises everyone
 - **Shareable** — screenshot it, it looks cool
 - **Useful** — developers care about streaks. It's gamification without a gamification UI
