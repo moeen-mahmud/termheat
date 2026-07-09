@@ -18,8 +18,8 @@ export const HELP = `
     ${CommandMaps.version.short}, ${CommandMaps.version.long}               Show version
 
   Examples:
-    npx ${APP_NAME} moeen-mahmud
-    npx ${APP_NAME} moeen-mahmud --watch --theme fire --shame
+    npx ${APP_NAME} <your-username>
+    npx ${APP_NAME} <your-username> ${CommandMaps.watch.long} ${CommandMaps.theme.long} fire ${CommandMaps.shame.long}
 
   Tip: set GITHUB_TOKEN for exact counts via the GraphQL API.
 `;

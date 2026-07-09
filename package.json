@@ -6,9 +6,13 @@
   "private": true,
   "scripts": {
     "dev": "bun run src/index.tsx",
-    "dev:self": "bun run src/index.tsx moeen-mahmud"
+    "dev:self": "bun run src/index.tsx moeen-mahmud",
+    "build:node": "bun build src/index.tsx --target=node --outdir=dist --minify",
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "devDependencies": {
+    "react-devtools-core": "latest",
     "@types/node": "latest",
     "@types/bun": "latest",
     "@types/react": "^19.2.17"
