@@ -21,9 +21,10 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       # changeset publish shells out to npm, which needs Node + the registry.
+      # Node 24 ships npm >= 11.5.1, required for Trusted Publishing (OIDC).
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
@@ -39,6 +40,10 @@ jobs:
           publish: bun run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # setup-node's registry-url makes npm read NODE_AUTH_TOKEN; the
+          # changesets action reads NPM_TOKEN. Set both or auth silently
+          # goes out empty and npm masks it as E404.
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           # Skip the husky prepare script inside npm publish.
           HUSKY: "0"
