@@ -9,6 +9,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  # For npm Trusted Publishing (OIDC) + provenance once the package exists.
+  id-token: write
 
 jobs:
   release:
