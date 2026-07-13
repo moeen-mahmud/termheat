@@ -86,7 +86,7 @@ Same UI either way; the token only improves the numbers.
 
 ## Development
 
-Built with [Ink](https://github.com/vadimdemedes/ink) + React and developed
+Built with [Ink](https://github.com/vadimdemedes/ink) and developed
 with [Bun](https://bun.sh):
 
 ```bash
@@ -96,7 +96,7 @@ bun test                 # unit tests
 ```
 
 Releases are automated with [changesets](https://github.com/changesets/changesets):
-merging the "Version Packages" PR publishes to npm.
+merging the "chore(release): version package" PR publishes to npm.
 
 ## License
 
