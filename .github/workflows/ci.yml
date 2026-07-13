@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type-check
+        run: bunx tsc --noEmit
+
+      - name: Test
+        run: bun test
+
+      - name: Build the npm bundle
+        run: bun run build:node
+
+      # npx users run the bundle under Node, not Bun — smoke test with node.
+      - name: Smoke test the bundle under Node
+        run: |
+          node dist/index.js --help
+          node dist/index.js --version
+          NO_COLOR=1 node dist/index.js torvalds | head -20
