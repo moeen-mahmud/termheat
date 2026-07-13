@@ -1,0 +1,32 @@
+name: Demo GIF
+
+# Regenerates the README demo whenever the tape changes, so the GIF can never
+# show a stale UI. Run manually (workflow_dispatch) after visual releases.
+on:
+  push:
+    branches: [main]
+    paths: ["termheat.tape"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vhs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - uses: charmbracelet/vhs-action@v2
+        with:
+          path: termheat.tape
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: regenerate demo gif"
+          file_pattern: demo.gif

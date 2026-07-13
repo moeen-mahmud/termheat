@@ -1,0 +1,137 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": ["**", "!node_modules/", "!dist/", "!build/", "!coverage/", "!.changeset/", "!bun.lock", "!bin/"]
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineEnding": "lf",
+		"lineWidth": 120,
+		"attributePosition": "auto",
+		"useEditorconfig": true
+	},
+	"javascript": {
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true,
+			"bracketSameLine": false,
+			"quoteStyle": "double"
+		}
+	},
+	"json": {
+		"formatter": {
+			"enabled": true,
+			"indentStyle": "tab",
+			"indentWidth": 4,
+			"trailingCommas": "none"
+		}
+	},
+	"css": {
+		"formatter": {
+			"enabled": false
+		},
+		"linter": {
+			"enabled": false
+		},
+		"parser": {
+			"allowWrongLineComments": true
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"suspicious": {
+				"noExplicitAny": "warn",
+				"noEmptyInterface": "off",
+				"noEmptyBlockStatements": "off",
+				"noArrayIndexKey": "warn",
+				"noTemplateCurlyInString": "off",
+				"noImplicitAnyLet": "warn",
+				"useIterableCallbackReturn": "warn"
+			},
+			"style": {
+				"noNonNullAssertion": "off",
+				"useTemplate": "warn",
+				"useConst": "error",
+				"useNodejsImportProtocol": "warn"
+			},
+			"correctness": {
+				"noUnusedVariables": {
+					"level": "warn",
+					"options": {}
+				},
+				"noUnusedImports": "warn",
+				"noUnusedFunctionParameters": "warn",
+				"useExhaustiveDependencies": "off"
+			},
+			"complexity": {
+				"noForEach": "off",
+				"noUselessFragments": "off",
+				"noBannedTypes": "off"
+			},
+			"performance": {
+				"noAccumulatingSpread": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "off"
+			},
+			"a11y": {
+				"useKeyWithClickEvents": "off",
+				"useSemanticElements": "off",
+				"noStaticElementInteractions": "off",
+				"useButtonType": "off",
+				"noSvgWithoutTitle": "off",
+				"useAriaPropsSupportedByRole": "off",
+				"noLabelWithoutControl": "off"
+			},
+			"nursery": {
+				"useSortedClasses": "off"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.md"],
+			"formatter": {
+				"enabled": false
+			}
+		},
+		{
+			"includes": ["**/*.{yml,yaml}"],
+			"formatter": {
+				"enabled": false
+			}
+		},
+		{
+			"includes": ["**/*.{ts,tsx}"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUndeclaredVariables": "off"
+					}
+				}
+			}
+		}
+	],
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "off"
+			}
+		}
+	}
+}

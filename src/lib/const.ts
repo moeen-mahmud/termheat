@@ -13,28 +13,20 @@ export const DEFAULT_THEME = "github" as const;
 export const GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 
 export const CONTRIBUTIONS_URL = (username: string) =>
-  `https://github.com/users/${encodeURIComponent(username)}/contributions`;
+	`https://github.com/users/${encodeURIComponent(username)}/contributions`;
 
 // Flat blocks, quiet zeroes: color carries intensity, empty days recede.
 // Colors live in src/themes.ts — Ink renders them, no raw ANSI here.
 export const CHARS = ["··", "██", "██", "██", "██"] as const;
+// --ascii / NO_COLOR fallback: glyph density carries intensity where block
+// characters or color can't be relied on.
+export const ASCII_CHARS = ["..", "--", "++", "**", "##"] as const;
 export const WEEKDAY_LABELS = ["   ", "Mon", "   ", "Wed", "   ", "Fri", "   "];
-export const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(
-  " ",
-);
+export const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 
-export const SPINNER = [
-  "⠋",
-  "⠙",
-  "⠹",
-  "⠸",
-  "⠼",
-  "⠴",
-  "⠦",
-  "⠧",
-  "⠇",
-  "⠏",
-] as const;
+export const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
+
+export const ASCII_SPINNER = ["|", "/", "-", "\\"] as const;
 
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
