@@ -34,7 +34,10 @@
 	},
 	"homepage": "https://github.com/moeen-mahmud/termheat#readme",
 	"bugs": "https://github.com/moeen-mahmud/termheat/issues",
-	"author": "Moeen Mahmud",
+	"author": {
+		"email": "moeen.mahmud007@gmail.com",
+		"name": "Moeen Mahmud"
+	},
 	"license": "MIT",
 	"keywords": [
 		"github",
