@@ -1,7 +1,8 @@
 name: Demo GIF
 
 # Regenerates the README demo whenever the tape changes, so the GIF can never
-# show a stale UI. Run manually (workflow_dispatch) after visual releases.
+# show a stale UI. The tape records the real published package via npx, so
+# run this (workflow_dispatch) only after a successful npm release.
 on:
   push:
     branches: [main]
@@ -17,19 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
       # vhs-action downloads ffmpeg from a third-party host and fails often;
       # install the pieces deterministically instead (apt + Charm's apt repo).
+      # noto-color-emoji is needed so 🔥 renders in the recording.
       - name: Install VHS
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg fonts-noto-color-emoji
           sudo curl -fsSL -o /usr/local/bin/ttyd \
-            https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64
+            https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64
           sudo chmod +x /usr/local/bin/ttyd
           sudo mkdir -p /etc/apt/keyrings
           curl -fsSL https://repo.charm.sh/apt/gpg.key \
@@ -41,6 +38,15 @@ jobs:
 
       - name: Record the demo
         run: vhs termheat.tape
+
+      # The tape also renders demo.txt — keep it as a debug artifact so a
+      # bad recording can be diagnosed without frame-extracting the GIF.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-text-render
+          path: demo.txt
+          if-no-files-found: ignore
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
