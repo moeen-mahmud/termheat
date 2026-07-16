@@ -16,7 +16,8 @@
 	"scripts": {
 		"dev": "bun run src/index.tsx",
 		"dev:self": "bun run src/index.tsx moeen-mahmud",
-		"build:node": "bun build src/index.tsx --target=node --outdir=dist --minify",
+		"bin": "node ./bin/termheat.js",
+		"build:node": "bun build src/index.tsx --target=node --outdir=dist --minify --splitting --external @resvg/resvg-js",
 		"test": "bun test",
 		"test:watch": "bun test --watch",
 		"prepare": "bunx husky",
@@ -52,16 +53,17 @@
 		"productivity"
 	],
 	"devDependencies": {
+		"@biomejs/biome": "^2.4.13",
 		"@changesets/cli": "^2.31.0",
+		"@commitlint/cli": "^20.5.0",
+		"@commitlint/config-conventional": "^20.5.0",
+		"@resvg/resvg-js": "^2.6.2",
 		"@types/bun": "latest",
 		"@types/node": "latest",
 		"@types/react": "^19.2.17",
+		"lint-staged": "latest",
 		"react-devtools-core": "latest",
-		"typescript": "^5",
-		"@biomejs/biome": "^2.4.13",
-		"@commitlint/cli": "^20.5.0",
-		"@commitlint/config-conventional": "^20.5.0",
-		"lint-staged": "latest"
+		"typescript": "^5"
 	},
 	"dependencies": {
 		"ink": "^7.1.0",

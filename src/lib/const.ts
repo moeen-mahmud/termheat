@@ -10,6 +10,8 @@ export const THEMES = ["github", "fire", "ocean", "mono"] as const;
 
 export const DEFAULT_THEME = "github" as const;
 
+export const EXPORT_FORMATS = ["svg", "png"] as const;
+
 export const GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 
 export const CONTRIBUTIONS_URL = (username: string) =>
@@ -24,11 +26,24 @@ export const ASCII_CHARS = ["..", "--", "++", "**", "##"] as const;
 export const WEEKDAY_LABELS = ["   ", "Mon", "   ", "Wed", "   ", "Fri", "   "];
 export const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 
+// --status sparkline ramps, quietest → loudest. Lengths may differ; the
+// sparkline maps counts onto whichever ramp it's given.
+export const SPARK_CHARS = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"] as const;
+export const ASCII_SPARK_CHARS = [".", "-", "=", "+", "*", "#"] as const;
+export const STATUS_WINDOW_DAYS = 14;
+/** Cache older than this triggers a detached background refetch. */
+export const STATUS_TTL_MINUTES = 30;
+
 export const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 
 export const ASCII_SPINNER = ["|", "/", "-", "\\"] as const;
 
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+/** The hottest levelFor bucket (15+ contributions) — pins the top of the ramp. */
+export const MAX_LEVEL = 7;
+
+export const STATUS_REFRESH_INTERVAL_MS = 60_000;
 
 export const FPS = 8;
 export const ANIMATION_BREATHE_EXP_LEFT = 0.72; // 72% brightness at the left of the sine wave

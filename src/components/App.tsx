@@ -1,12 +1,8 @@
-import { Box, Text, useApp, useInput, useStdin, useStdout } from "ink";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Heatmap } from "@/components/Heatmap";
 import { StatsBar } from "@/components/StatsBar";
 import { fetchContributions, GitHubError } from "@/github";
 import { buildHeatmap } from "@/heatmap";
 import { useAnimation } from "@/hooks/useAnimation";
-import type { ContributionDay } from "@/lib/types";
-import { currentStreakDates } from "@/streak";
 import {
 	APP_NAME,
 	APP_VERSION,
@@ -19,6 +15,10 @@ import {
 	VISIBLE_HEATMAP_FIT,
 } from "@/lib/const";
 import type { AppProps } from "@/lib/schema";
+import type { ContributionDay } from "@/lib/types";
+import { currentStreakDates } from "@/streak";
+import { Box, Text, useApp, useInput, useStdin, useStdout } from "ink";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export function App({ username, theme, watch, refreshMinutes, shame, animate, ascii }: AppProps) {
 	const { exit } = useApp();
@@ -35,6 +35,13 @@ export function App({ username, theme, watch, refreshMinutes, shame, animate, as
 	// Async callbacks would close over a stale tick; a ref tracks the latest.
 	const tickRef = useRef(0);
 	tickRef.current = anim.tick;
+
+	const showHelp = () => {
+		// exec `npx termheat --help` in a child process so Ink doesn't try to render it.
+		const { spawnSync } = require("node:child_process");
+		spawnSync("npx", [APP_NAME, "--help"], { stdio: "inherit" });
+		exit();
+	};
 
 	const load = useCallback(async () => {
 		setFetching(true);
@@ -76,6 +83,7 @@ export function App({ username, theme, watch, refreshMinutes, shame, animate, as
 		(input) => {
 			if (input === "q") exit();
 			if (input === "r" && !fetching) void load();
+			if (input === "h") showHelp();
 		},
 		{ isActive: interactive },
 	);

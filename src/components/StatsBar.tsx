@@ -1,7 +1,7 @@
-import { Box, Text } from "ink";
+import type { StatsBarProps } from "@/lib/schema";
 import { shameLine } from "@/lib/shame";
 import { daysSinceLastContribution, longestStreak, totalContributions } from "@/streak";
-import type { StatsBarProps } from "@/lib/schema";
+import { Box, Text } from "ink";
 
 export function StatsBar({
 	days,
@@ -43,7 +43,7 @@ export function StatsBar({
 			{interactive && (
 				<Box marginTop={1}>
 					<Text dimColor>
-						[q] quit [r] refresh
+						[q] quit [r] refresh [h] help
 						{watch && `  ${ascii ? "" : "⟳ "}auto-refresh every ${refreshMinutes}m`}
 						{refreshing && (ascii ? "  - refreshing..." : "  · refreshing…")}
 					</Text>

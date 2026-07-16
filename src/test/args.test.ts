@@ -57,6 +57,48 @@ describe("parseArgs", () => {
 		expect(parseArgs([]).ascii).toBe(false);
 	});
 
+	test("valid export format is accepted, short and long", () => {
+		expect(parseArgs(["-e", "svg"]).export).toBe("svg");
+		expect(parseArgs(["--export", "png"]).export).toBe("png");
+	});
+
+	test("invalid export format is an error naming the valid ones", () => {
+		const args = parseArgs(["--export", "gif"]);
+		expect(args.export).toBeUndefined();
+		expect(args.errors[0]).toContain("svg, png");
+		expect(args.errors[0]).toContain("gif");
+	});
+
+	test("export missing its value is an error, not a throw", () => {
+		expect(parseArgs(["--export"]).errors[0]).toContain("--export");
+	});
+
+	test("out flag takes a path, errors without one", () => {
+		expect(parseArgs(["-o", "card.svg"]).out).toBe("card.svg");
+		expect(parseArgs(["--out"]).errors[0]).toContain("--out");
+	});
+
+	test("status flag is recognized", () => {
+		expect(parseArgs(["-S"]).status).toBe(true);
+		expect(parseArgs(["--status"]).status).toBe(true);
+		expect(parseArgs([]).status).toBe(false);
+	});
+
+	test("export doesn't swallow a following positional username", () => {
+		const args = parseArgs(["--export", "svg", "octocat"]);
+		expect(args.username).toBe("octocat");
+		expect(args.export).toBe("svg");
+		expect(args.errors).toEqual([]);
+	});
+
+	test("--out without --export is an error", () => {
+		expect(parseArgs(["-o", "card.svg"]).errors[0]).toContain("--export");
+	});
+
+	test("--status and --export together are an error", () => {
+		expect(parseArgs(["-S", "-e", "svg"]).errors[0]).toContain("pick one");
+	});
+
 	test("robustness flags don't swallow a following username", () => {
 		const args = parseArgs(["--static", "octocat", "--ascii"]);
 		expect(args.username).toBe("octocat");
