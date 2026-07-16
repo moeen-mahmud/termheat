@@ -1,7 +1,7 @@
 import { CommandMaps } from "@/lib/commands";
-import { APP_NAME, APP_VERSION, THEMES } from "@/lib/const";
+import { APP_NAME, APP_VERSION, EXPORT_FORMATS, THEMES } from "@/lib/const";
 import type { CliArgs } from "@/lib/schema";
-import type { ThemeName } from "@/lib/types";
+import type { ExportFormat, ThemeName } from "@/lib/types";
 
 export const HELP = `
   🔥 ${APP_NAME} v${APP_VERSION} — animated terminal heatmap of your GitHub contributions
@@ -15,6 +15,9 @@ export const HELP = `
     ${CommandMaps.shame.short}, ${CommandMaps.shame.long}             Enable gentle shame mode
     ${CommandMaps.noAnimation.short}, ${CommandMaps.noAnimation.long}      Render one static frame (alias: ${CommandMaps.noAnimation.alias})
     ${CommandMaps.ascii.short}, ${CommandMaps.ascii.long}             ASCII-only output for basic terminals and fonts
+    ${CommandMaps.export.short}, ${CommandMaps.export.long} <fmt>      Write a shareable animated card: ${EXPORT_FORMATS.join(" | ")}
+    ${CommandMaps.out.short}, ${CommandMaps.out.long} <file>        Where ${CommandMaps.export.long} writes (default: ./${APP_NAME}-<user>.<fmt>)
+    ${CommandMaps.status.short}, ${CommandMaps.status.long}            Cached one-line status for tmux/starship: 🔥 37d ▁▃▅█▇
     ${CommandMaps.config.short}, ${CommandMaps.config.long}            Show config file path and contents
     ${CommandMaps.help.short}, ${CommandMaps.help.long}              Show this help
     ${CommandMaps.version.short}, ${CommandMaps.version.long}               Show version
@@ -40,6 +43,8 @@ export function parseArgs(argv: string[]): CliArgs {
 		version: false,
 		noAnimation: false,
 		ascii: false,
+		status: false,
+		refreshCache: false,
 		errors: [],
 	};
 
@@ -75,6 +80,32 @@ export function parseArgs(argv: string[]): CliArgs {
 			case CommandMaps.ascii.long:
 				args.ascii = true;
 				break;
+			case CommandMaps.status.short:
+			case CommandMaps.status.long:
+				args.status = true;
+				break;
+			case CommandMaps.refreshCache.long:
+				args.refreshCache = true;
+				break;
+			case CommandMaps.export.short:
+			case CommandMaps.export.long: {
+				const value = argv[++i];
+				if (value && EXPORT_FORMATS.includes(value as ExportFormat)) {
+					args.export = value as ExportFormat;
+				} else {
+					args.errors.push(
+						`${CommandMaps.export.long} must be one of: ${EXPORT_FORMATS.join(", ")} (got ${value ?? "nothing"})`,
+					);
+				}
+				break;
+			}
+			case CommandMaps.out.short:
+			case CommandMaps.out.long: {
+				const value = argv[++i];
+				if (value) args.out = value;
+				else args.errors.push(`${arg} needs a value`);
+				break;
+			}
 			case CommandMaps.username.short:
 			case CommandMaps.username.long: {
 				const value = argv[++i];
@@ -101,6 +132,14 @@ export function parseArgs(argv: string[]): CliArgs {
 					args.errors.push(`unexpected argument: ${arg}`);
 				}
 		}
+	}
+
+	// Cross-flag rules live here (not index.tsx) so they stay unit-testable.
+	if (args.out && !args.export) {
+		args.errors.push(`${CommandMaps.out.long} requires ${CommandMaps.export.long}`);
+	}
+	if (args.status && args.export) {
+		args.errors.push(`${CommandMaps.status.long} and ${CommandMaps.export.long} are different modes — pick one`);
 	}
 
 	return args;

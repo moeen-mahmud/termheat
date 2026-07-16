@@ -1,4 +1,4 @@
-import type { ThemeName, Heatmap as HeatmapData, ContributionDay } from "@/lib/types";
+import type { ContributionDay, ExportFormat, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
 
 export interface CliArgs {
 	username?: string;
@@ -12,6 +12,14 @@ export interface CliArgs {
 	noAnimation: boolean;
 	/** ASCII-only cells and no emoji, for basic terminals and fonts. */
 	ascii: boolean;
+	/** Write a shareable card instead of rendering the TUI. */
+	export?: ExportFormat;
+	/** Output path for --export; defaults to termheat-<username>.<format>. */
+	out?: string;
+	/** Print the cached one-line status (for tmux/starship) and exit. */
+	status: boolean;
+	/** Internal (spawned by --status): refetch, rewrite the cache, exit silently. */
+	refreshCache: boolean;
 	/** Human-readable problems; if non-empty the CLI prints them and exits 1. */
 	errors: string[];
 }
@@ -33,6 +41,17 @@ export interface Theme {
 	levels: readonly [string, string, string, string, string];
 	/** Accent for the title and streak stat. */
 	accent: string;
+}
+
+export interface ExportOptions {
+	format: ExportFormat;
+	username: string;
+	days: ContributionDay[];
+	theme: Theme;
+	/** false (from --no-animation/NO_COLOR) ships the card as a static frame. */
+	animate: boolean;
+	/** Overrides the default ./termheat-<username>.<format>. */
+	out?: string;
 }
 
 export interface AnimationFrame {

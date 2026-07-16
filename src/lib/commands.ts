@@ -37,4 +37,21 @@ export const CommandMaps = {
 		short: "-a",
 		long: "--ascii",
 	},
+	export: {
+		short: "-e",
+		long: "--export",
+	},
+	out: {
+		short: "-o",
+		long: "--out",
+	},
+	status: {
+		/** Uppercase: -s is taken by --shame. */
+		short: "-S",
+		long: "--status",
+	},
+	/** Internal: the detached child --status spawns to refresh the cache. Not in HELP. */
+	refreshCache: {
+		long: "--refresh-cache",
+	},
 };
