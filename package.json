@@ -1,6 +1,6 @@
 {
 	"name": "termheat",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "🔥 Animated terminal heatmap of your GitHub contributions — zero auth, zero config, npx and done.",
 	"type": "module",
 	"bin": {
