@@ -44,6 +44,9 @@ npx termheat <username> --shame      # enable gentle judgement
 | `-s, --shame` | Gentle shame mode — the longer you idle, the spicier the copy |
 | `-n, --no-animation` | Render one static frame (alias: `--static`) |
 | `-a, --ascii` | ASCII-only output for basic terminals and fonts |
+| `-e, --export <fmt>` | Write a shareable animated card: `svg` \| `png` |
+| `-o, --out <file>` | Where `--export` writes (default: `./termheat-<user>.<fmt>`) |
+| `-S, --status` | Cached one-line status for tmux/starship: `🔥 37d ▁▃▅█▇` |
 | `-c, --config` | Show config file path and contents |
 | `-h, --help` / `-v, --version` | The usual |
 
@@ -56,6 +59,69 @@ npx termheat <username> --shame      # enable gentle judgement
 - Honors [`NO_COLOR`](https://no-color.org): drops color, animation, and
   emoji, and switches to an ASCII density ramp (`.. -- ++ ** ##`) so
   intensity stays readable.
+
+## Share it
+
+### Animated SVG card
+
+```bash
+npx termheat <your-username> --export svg
+```
+
+Writes `termheat-<username>.svg` — the same heatmap as a self-contained card,
+with the reveal wipe and streak-flame shimmer embedded as CSS. It animates
+anywhere SVG renders, **including GitHub READMEs**. Commit it to your profile
+repo and embed:
+
+```markdown
+![my contributions](termheat-your-username.svg)
+```
+
+Themes apply (`--theme fire --export svg`), and `--no-animation` exports a
+static frame. Renderers that don't run CSS (and viewers with
+`prefers-reduced-motion` set) gracefully get the finished grid.
+
+### PNG
+
+```bash
+npx termheat <your-username> --export png #svg --out <dir>/termheat-<username>.png/svg
+```
+
+Rasterization needs [`@resvg/resvg-js`](https://github.com/nrwl/resvg-js),
+which is **not** installed with termheat — an ~8 MB native binary would slow
+every npx cold start for a feature most runs don't use. Install it once where
+you run termheat (`npm install @resvg/resvg-js`) and PNG export lights up.
+
+### Status one-liner
+
+```bash
+npx termheat <your-username> --status
+# 🔥 37d ▁▃▅▂▁▁▄▅█▇▃▂▅█
+```
+
+Current streak plus a two-week sparkline, printed from a local cache
+(`~/.termheat-cache.json`) so it returns instantly — stale data refreshes in a
+detached background process, never blocking your prompt. Built for status
+bars:
+
+**tmux** (`~/.tmux.conf`):
+
+```tmux
+set -g status-interval 60
+set -g status-right "#(npx termheat --status) | %H:%M"
+```
+
+**starship** (`~/.config/starship.toml`):
+
+```toml
+[custom.termheat]
+command = "npx termheat --status"
+when = true
+shell = "sh"
+```
+
+Both recipes assume your username lives in `~/.termheat.json` so no argument
+is needed. Add `--ascii` if your bar font lacks the block glyphs.
 
 ## Configuration
 
