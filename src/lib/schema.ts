@@ -54,6 +54,12 @@ export interface ExportOptions {
 	out?: string;
 }
 
+export interface CacheEntry {
+	/** ISO timestamp of the fetch that produced `days`. */
+	fetchedAt: string;
+	days: ContributionDay[];
+}
+
 export interface AnimationFrame {
 	/** Monotonic frame counter — the single source all effects derive from. */
 	tick: number;
