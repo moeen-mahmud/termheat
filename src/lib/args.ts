@@ -20,7 +20,7 @@ export const HELP = `
     ${CommandMaps.status.short}, ${CommandMaps.status.long}            Cached one-line status for tmux/starship: 🔥 37d ▁▃▅█▇
     ${CommandMaps.config.short}, ${CommandMaps.config.long}            Show config file path and contents
     ${CommandMaps.help.short}, ${CommandMaps.help.long}              Show this help
-    ${CommandMaps.version.short}, ${CommandMaps.version.long}               Show version
+    ${CommandMaps.version.short}, ${CommandMaps.version.long}           Show version
 
   Examples:
     npx ${APP_NAME} <your-username>
