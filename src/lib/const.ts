@@ -40,6 +40,11 @@ export const ASCII_SPINNER = ["|", "/", "-", "\\"] as const;
 
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
+/** The hottest levelFor bucket (15+ contributions) — pins the top of the ramp. */
+export const MAX_LEVEL = 7;
+
+export const STATUS_REFRESH_INTERVAL_MS = 60_000;
+
 export const FPS = 8;
 export const ANIMATION_BREATHE_EXP_LEFT = 0.72; // 72% brightness at the left of the sine wave
 export const ANIMATION_BREATHE_EXP_RIGHT = 0.28; // 100% brightness at the right of the sine wave
