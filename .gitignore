@@ -39,3 +39,4 @@ cspell.json
 # Misc
 x--*.md
 demo.txt
+.playwright*
