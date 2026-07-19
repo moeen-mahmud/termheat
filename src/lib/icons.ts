@@ -13,6 +13,7 @@ export const GAME_ICONS = {
 	bridgeAlt: "▄",
 	bug: "☠",
 	bolt: "⚡",
+	star: "★",
 } as const;
 
 export const GAME_EMOS = {

@@ -1,5 +1,6 @@
 import { APP_NAME, MONTHS } from "@/lib/const";
 import type { EngineState } from "@/lib/engine";
+import { STAR_COLOR } from "@/lib/game-consts";
 import type { Theme } from "@/lib/schema";
 import { type MonthGrade, monthGrades, outcomeLine, yearSpan } from "@/lib/share";
 import type { GameLevel } from "@/lib/types";
@@ -131,6 +132,17 @@ function gameScene(w: EngineState, level: GameLevel, theme: Theme, dayW: number)
 		})
 		.join("");
 
+	// Ungrabbed invincibility stars — gold, drawn over the flame layer because
+	// a 15+ day usually sits inside a streak, and the rarer collectible wins.
+	const stars = level.columns
+		.map((cell, i) => {
+			if (!cell.star || w.stars.has(i)) return "";
+			const cx = dayX(i) + dayW / 2;
+			const cy = topOf(i) - 4;
+			return `<rect x="${(cx - 1.6).toFixed(2)}" y="${(cy - 1.6).toFixed(2)}" width="3.2" height="3.2" fill="${STAR_COLOR}" transform="rotate(45 ${cx.toFixed(2)} ${cy.toFixed(2)})"/>`;
+		})
+		.join("");
+
 	// Checkpoint flags (the spawn needs none — you start standing on it):
 	// accent once passed, dim ahead, exactly like the in-game ⚑.
 	const progressCol = won ? (level.checkpoints.at(-1)?.column ?? 0) : (level.checkpoints[w.checkpoint]?.column ?? 0);
@@ -174,5 +186,5 @@ function gameScene(w: EngineState, level: GameLevel, theme: Theme, dayW: number)
 		`<title>${won ? "you — made it" : "you — out of hearts here"}</title></rect>` +
 		`<rect x="${(cx + 0.6).toFixed(2)}" y="${py + 2}" width="1.2" height="1.2" fill="${BG}"/></g>`;
 
-	return `<g><rect x="${PAD}" y="${baseY}" width="${days * dayW}" height="1" fill="${BORDER}"/>${terrain}${flames}${flags}${finish}${ticks}${player}</g>`;
+	return `<g><rect x="${PAD}" y="${baseY}" width="${days * dayW}" height="1" fill="${BORDER}"/>${terrain}${flames}${stars}${flags}${finish}${ticks}${player}</g>`;
 }

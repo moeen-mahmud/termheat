@@ -39,6 +39,8 @@ export interface LevelColumn {
 	height: number;
 	/** Collectible flame — this date is part of a streak (FLAME_MIN_STREAK+ consecutive active days). */
 	flame: boolean;
+	/** Invincibility star — a STAR.MIN_COUNT+ contribution day. Big days buy brief immortality. */
+	star: boolean;
 	/** Artificial platform inserted by the repair pass; rendered dim. */
 	ghost: boolean;
 }
@@ -59,6 +61,8 @@ export interface GameLevel {
 	finishColumn: number;
 	/** How many flames exist, for the HUD's `n/total` counter. */
 	flameTotal: number;
+	/** How many invincibility stars exist — the title screen brags only when > 0. */
+	starTotal: number;
 	/** Length of the current streak in days — buys hearts (see HEARTS). */
 	currentStreak: number;
 }

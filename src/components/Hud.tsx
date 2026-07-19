@@ -1,6 +1,6 @@
 import { MONTHS } from "@/lib/const";
 import { type createEngine, speedAt } from "@/lib/engine";
-import { HEART_COLOR, HUD_INPUT } from "@/lib/game-consts";
+import { HEART_COLOR, HUD_INPUT, STAR_COLOR } from "@/lib/game-consts";
 import { GAME_EMOS, GAME_ICONS } from "@/lib/icons";
 import type { GameProps } from "@/lib/schema";
 import { deathLine } from "@/lib/shame";
@@ -67,7 +67,10 @@ export function Hud({
 	return (
 		<Text>
 			<Text color={HEART_COLOR}>{hearts}</Text>
-			{` · ${GAME_EMOS.flame} ${w.flames}/${level.flameTotal} · ${month} · ${GAME_ICONS.bolt} ${speedAt(w.elapsed).toFixed(1)} · [space] jump ×2 · [${HUD_INPUT.quit}] quit`}
+			{` · ${GAME_EMOS.flame} ${w.flames}/${level.flameTotal}`}
+			{/* Star countdown, whole seconds — 3…2…1 reads at a glance mid-jump. */}
+			{w.starS > 0 && <Text bold color={STAR_COLOR}>{` · ${GAME_ICONS.star} ${Math.ceil(w.starS)}`}</Text>}
+			{` · ${month} · ${GAME_ICONS.bolt} ${speedAt(w.elapsed).toFixed(1)} · [space] jump ×2 · [${HUD_INPUT.quit}] quit`}
 		</Text>
 	);
 }

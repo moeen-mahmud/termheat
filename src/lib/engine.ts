@@ -1,4 +1,4 @@
-import { HEARTS, NO_FLOOR } from "@/lib/game-consts";
+import { HEARTS, NO_FLOOR, STAR } from "@/lib/game-consts";
 import type { DeathCause, GameLevel, GameStatus } from "@/lib/types";
 
 /**
@@ -93,6 +93,10 @@ export interface EngineState {
 	/** Flames collected, run-total; survives respawns — a lived day stays lived. */
 	flames: number;
 	collected: Set<number>;
+	/** Seconds of star invincibility remaining. 0 = mortal. */
+	starS: number;
+	/** Columns whose ★ was grabbed; survives respawns like flames do. */
+	stars: Set<number>;
 	/** Index into level.checkpoints of the last checkpoint passed. */
 	checkpoint: number;
 	/** Lives left. Each death costs one; at zero the run is over. */
@@ -128,6 +132,8 @@ export function createEngine(level: GameLevel): EngineState {
 		deathLog: [],
 		flames: 0,
 		collected: new Set(),
+		starS: 0,
+		stars: new Set(),
 		checkpoint: 0,
 		hearts,
 		heartsMax: hearts,
@@ -162,16 +168,19 @@ export function step(w: EngineState, level: GameLevel, dt: number, input: StepIn
 	const heightL = level.columns[colL]?.height ?? 0;
 	const heightR = level.columns[colR]?.height ?? 0;
 	const solid = Math.max(heightL, heightR);
-	const ground = solid > 0 ? solid : NO_FLOOR;
+	// Star power: the level yields. Pits grow a phantom floor at the lava row —
+	// and the timer expiring mid-pit drops you in, exactly like the plumber.
+	const starred = w.starS > 0;
+	const ground = solid > 0 ? solid : starred ? STAR.FLOOR_ROWS : NO_FLOOR;
 
 	if (!w.airborne) {
 		const rise = ground - w.y;
-		if (rise > PHYSICS.MAX_STEP_UP + 0.001) {
+		if (rise > PHYSICS.MAX_STEP_UP + 0.001 && !starred) {
 			die(w, "wall", colL);
 			return;
 		}
 		if (rise > 0) {
-			w.y = ground; // auto-step
+			w.y = ground; // auto-step (any rise, while starred — walls yield too)
 		} else if (rise < 0) {
 			w.airborne = true; // walked off a ledge or over a pit edge
 			w.vy = 0;
@@ -199,7 +208,7 @@ export function step(w: EngineState, level: GameLevel, dt: number, input: StepIn
 		const maxFall = PHYSICS.MAX_FALL_ROWS_PER_STEP / dt;
 		if (w.vy < -maxFall) w.vy = -maxFall;
 		if (w.vy <= 0 && w.y <= ground) {
-			if (ground - w.y > PHYSICS.WALL_OVERLAP_ROWS) {
+			if (ground - w.y > PHYSICS.WALL_OVERLAP_ROWS && !starred) {
 				die(w, "wall", colL);
 				return;
 			}
@@ -215,6 +224,7 @@ export function step(w: EngineState, level: GameLevel, dt: number, input: StepIn
 	}
 
 	collectFlames(w, level, colL, colR);
+	collectStars(w, level, colL, colR);
 	while (level.checkpoints[w.checkpoint + 1] && level.checkpoints[w.checkpoint + 1]!.column <= colL) {
 		w.checkpoint++;
 	}
@@ -224,6 +234,7 @@ export function step(w: EngineState, level: GameLevel, dt: number, input: StepIn
 	// forgiveness window (the round-1 "my jump got eaten" bug in new clothes).
 	if (w.jumpBufferS > 0) w.jumpBufferS = Math.max(0, w.jumpBufferS - dt);
 	if (w.airborne && w.coyoteS > 0) w.coyoteS = Math.max(0, w.coyoteS - dt);
+	if (w.starS > 0) w.starS = Math.max(0, w.starS - dt);
 }
 
 /**
@@ -272,6 +283,17 @@ function collectFlames(w: EngineState, level: GameLevel, colL: number, colR: num
 		if (cell?.flame && !w.collected.has(col) && w.y - cell.height <= PHYSICS.FLAME_GRAB_ROWS) {
 			w.collected.add(col);
 			w.flames++;
+		}
+	}
+}
+
+/** Same grab window as flames — sailing high over a big day doesn't count either. */
+function collectStars(w: EngineState, level: GameLevel, colL: number, colR: number): void {
+	for (const col of colL === colR ? [colL] : [colL, colR]) {
+		const cell = level.columns[col];
+		if (cell?.star && !w.stars.has(col) && w.y - cell.height <= PHYSICS.FLAME_GRAB_ROWS) {
+			w.stars.add(col);
+			w.starS = STAR.DURATION_S; // refresh to full, never stack
 		}
 	}
 }

@@ -17,6 +17,7 @@ function makeLevel(): GameLevel {
 		ghost: false,
 		// A little streak mid-July, so the scene has collectibles to draw.
 		flame: i >= 10 && i <= 14,
+		star: false,
 	}));
 	return {
 		columns,
@@ -27,6 +28,7 @@ function makeLevel(): GameLevel {
 		],
 		finishColumn: 89,
 		flameTotal: 5,
+		starTotal: 0,
 		currentStreak: 0,
 	};
 }

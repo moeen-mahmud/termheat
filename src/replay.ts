@@ -5,6 +5,7 @@ import {
 	REPLAY,
 	REPLAY_FRAME_HEIGHT,
 	REPLAY_FRAME_WIDTH,
+	STAR_COLOR,
 	TICK_INPUT,
 } from "@/lib/game-consts";
 import { encodeGif, type GifFrame } from "@/lib/gif";
@@ -76,6 +77,7 @@ interface ScenePalette {
 	fire: number[];
 	accent: number;
 	heart: number;
+	star: number;
 }
 
 function buildPalette(theme: Theme): ScenePalette {
@@ -98,6 +100,7 @@ function buildPalette(theme: Theme): ScenePalette {
 		fire: FIRE_RAMP.map(idx),
 		accent: idx(theme.accent),
 		heart: idx(HEART_COLOR),
+		star: idx(STAR_COLOR),
 		colors,
 	};
 }
@@ -134,6 +137,10 @@ function rasterize(w: EngineState, level: GameLevel, pal: ScenePalette): Uint8Ar
 		if (cell.flame && !w.collected.has(d)) {
 			diamond(px, x + DAY_PX / 2, top - 5, flicker);
 		}
+		if (cell.star && !w.stars.has(d)) {
+			// Star wins the cell over a flame, matching the terminal draw order.
+			diamond(px, x + DAY_PX / 2, top - 5, pal.star);
+		}
 		if (d === level.finishColumn) {
 			// The ░ shimmer pillar: a dotted column from the sky to the terrain.
 			for (let y = 2; y < top - 1; y += 4) fill(x + 3, y, 2, 2, pal.accent);
@@ -152,11 +159,12 @@ function rasterize(w: EngineState, level: GameLevel, pal: ScenePalette): Uint8Ar
 		fill(x + 1, groundTop - 10, 3, 2, color);
 	}
 
-	// The player: one day-column wide, one row tall, ember-red while dead.
+	// The player: one day-column wide, one row tall, ember-red while dead —
+	// and cycling the fire ramp while starred, same as the terminal sprite.
 	const spriteX = (w.x - cam) * DAY_PX;
 	const spriteTop = REPLAY_FRAME_HEIGHT - Math.max(w.y, 0) * ROW_PX - ROW_PX;
 	const alive = w.status !== "dead" && w.status !== "over";
-	fill(spriteX, spriteTop, DAY_PX, ROW_PX, alive ? pal.fire[3]! : pal.fire[0]!);
+	fill(spriteX, spriteTop, DAY_PX, ROW_PX, alive ? (w.starS > 0 ? flicker : pal.fire[3]!) : pal.fire[0]!);
 	fill(spriteX + DAY_PX - 3, spriteTop + 2, 2, 2, pal.bg); // the eye, facing the run
 
 	// Hearts HUD, top-left: filled = left, dim = spent.

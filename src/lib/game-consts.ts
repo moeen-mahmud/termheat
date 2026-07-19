@@ -40,6 +40,23 @@ export const GAME = {
 	FLAME_MIN_STREAK: 3,
 } as const;
 
+// Consistency is power, escalated: a big single day buys brief immortality.
+// The only hazards in this game are terrain, so "invincible" means the level
+// itself yields — walls become auto-steps and pits grow a phantom floor at
+// FLOOR_ROWS (the lava row: a starred player runs across the lava). The
+// floor vanishing when the timer expires mid-pit is the intended death.
+export const STAR = {
+	/** Contributions a single day needs to shine as a ★. */
+	MIN_COUNT: 15,
+	/** Seconds of invincibility per star. A fresh grab refreshes, never stacks. */
+	DURATION_S: 3,
+	/** Height of the phantom floor a starred player runs on over pits. */
+	FLOOR_ROWS: 1,
+} as const;
+
+/** Star gold — must read as neither flame ♦ (fire ramp) nor heart ♥ (red). */
+export const STAR_COLOR = "#ffd700";
+
 // Consistency is power, mechanically: your current streak buys hearts, and
 // hearts are what separate "lose 10 columns" from "lose the run".
 export const HEARTS = {

@@ -1,4 +1,4 @@
-import { GAME, HEARTS } from "@/lib/game-consts";
+import { GAME, HEARTS, STAR } from "@/lib/game-consts";
 import {
 	AIR_JUMP_V0,
 	createEngine,
@@ -18,15 +18,17 @@ const DAY_MS = 86_400_000;
 
 function makeLevel(
 	heights: number[],
-	opts: { flames?: number[]; checkpoints?: number[]; currentStreak?: number } = {},
+	opts: { flames?: number[]; stars?: number[]; checkpoints?: number[]; currentStreak?: number } = {},
 ): GameLevel {
 	const base = Date.parse("2026-01-01T00:00:00Z");
 	const flames = opts.flames ?? [];
+	const stars = opts.stars ?? [];
 	const columns: LevelColumn[] = heights.map((h, i) => ({
 		date: new Date(base + i * DAY_MS).toISOString().slice(0, 10),
 		level: Math.max(0, Math.min(4, h)) as Level,
 		height: h,
 		flame: flames.includes(i),
+		star: stars.includes(i),
 		ghost: false,
 	}));
 	return {
@@ -38,6 +40,7 @@ function makeLevel(
 		})),
 		finishColumn: columns.length - 1,
 		flameTotal: flames.length,
+		starTotal: stars.length,
 		currentStreak: opts.currentStreak ?? 0,
 	};
 }
@@ -320,5 +323,83 @@ describe("share-card bookkeeping", () => {
 		expect(w.deathLog).toHaveLength(1);
 		expect(w.deathLog[0]).toBe(w.deathColumn as number);
 		expect(w.deathLog[0]).toBeGreaterThanOrEqual(12);
+	});
+});
+
+describe("invincibility star", () => {
+	test("grabbing a ★ arms the timer and marks the column grabbed", () => {
+		const level = makeLevel(Array(60).fill(1), { stars: [5] });
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.stars.has(5));
+		expect(w.stars.has(5)).toBe(true);
+		expect(w.starS).toBeGreaterThan(0);
+		expect(w.starS).toBeLessThanOrEqual(STAR.DURATION_S);
+	});
+
+	test("a starred player crosses an unjumpable pit on the phantom floor", () => {
+		// A pit far wider than MAX_GAP right after the star — certain death
+		// for a mortal, a lava-surface sprint for a starred one.
+		const heights = Array.from({ length: 40 }, (_, i) => (i >= 8 && i <= 14 ? 0 : 1));
+		const level = makeLevel(heights, { stars: [6] });
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.x >= 16);
+		expect(w.status).toBe("running");
+		expect(w.deaths).toBe(0);
+	});
+
+	test("the same pit without the star kills — the floor was the star's doing", () => {
+		const heights = Array.from({ length: 40 }, (_, i) => (i >= 8 && i <= 14 ? 0 : 1));
+		const level = makeLevel(heights);
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.x >= 16);
+		expect(w.status).not.toBe("running");
+		expect(w.deathCause).toBe("pit");
+	});
+
+	test("a starred player steps up a wall that would kill a mortal", () => {
+		// +3 rise at column 10 — triple MAX_STEP_UP, a guaranteed wall death.
+		const heights = Array.from({ length: 40 }, (_, i) => (i >= 10 ? 4 : 1));
+		const level = makeLevel(heights, { stars: [7] });
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.x >= 12);
+		expect(w.status).toBe("running");
+		expect(w.y).toBe(4); // the wall became a step
+	});
+
+	test("star power is brief: the timer drains to zero and stays there", () => {
+		const level = makeLevel(Array(80).fill(1), { stars: [5] });
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.stars.has(5));
+		for (let i = 0; i <= Math.ceil(STAR.DURATION_S / DT); i++) tick(w, level);
+		expect(w.status).toBe("running");
+		expect(w.starS).toBe(0);
+	});
+
+	test("a second ★ refreshes the clock to full instead of stacking", () => {
+		const level = makeLevel(Array(80).fill(1), { stars: [5, 6] });
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.stars.has(6));
+		expect(w.starS).toBeGreaterThan(STAR.DURATION_S - 0.5); // fresh, not half-drained
+		expect(w.starS).toBeLessThanOrEqual(STAR.DURATION_S); // and never 2×
+	});
+
+	test("the classic: the star expires over the pit, and in you go", () => {
+		// The pit outlasts the star — at base speed the timer dies ~15 columns
+		// in, the phantom floor vanishes underfoot, and physics does the rest.
+		const heights = Array.from({ length: 60 }, (_, i) => (i >= 8 && i < 45 ? 0 : 1));
+		const level = makeLevel(heights, { stars: [6] });
+		const w = createEngine(level);
+		runUntil(w, level, () => false);
+		expect(w.status).not.toBe("running");
+		expect(w.deathCause).toBe("pit");
+		expect(w.deathColumn ?? 0).toBeGreaterThan(10); // died INSIDE the pit, not at its edge
+	});
+
+	test("a day can be flame and star at once — both collect on the pass", () => {
+		const level = makeLevel(Array(40).fill(1), { flames: [5], stars: [5] });
+		const w = createEngine(level);
+		runUntil(w, level, (s) => s.x >= 8);
+		expect(w.flames).toBe(1);
+		expect(w.stars.has(5)).toBe(true);
 	});
 });

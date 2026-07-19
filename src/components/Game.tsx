@@ -1,7 +1,7 @@
 import { Hud } from "@/components/Hud";
 import { COLUMN_WIDTH, MONTHS } from "@/lib/const";
 import { createEngine, respawn, step } from "@/lib/engine";
-import { HEART_COLOR, HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY, TICK_INPUT } from "@/lib/game-consts";
+import { HEART_COLOR, HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY, STAR, STAR_COLOR, TICK_INPUT } from "@/lib/game-consts";
 import { GAME_EMOS, GAME_ICONS } from "@/lib/icons";
 import { PIT_FLUIDS, type Chunk, type GameProps } from "@/lib/schema";
 import { monthYear } from "@/lib/share";
@@ -144,6 +144,9 @@ export function Game({
 					<Text color={HEART_COLOR}>{GAME_ICONS.heart.repeat(w.heartsMax)}</Text>
 					{" · "}
 					<Text color={FIRE_RAMP[2]}>{`${GAME_ICONS.flame} ${level.flameTotal} flames`}</Text>
+					{level.starTotal > 0 && (
+						<Text color={STAR_COLOR}>{` · ${GAME_ICONS.star} ${level.starTotal}`}</Text>
+					)}
 				</Text>
 				<Text>
 					{"you play as "}
@@ -157,6 +160,11 @@ export function Game({
 					dimColor
 				>{`you auto-run · [space] jump, again mid-air to double jump · ${GAME_ICONS.flag} months are checkpoints`}</Text>
 				<Text dimColor>{`hearts come from your current streak. keep shipping, respawn more`}</Text>
+				{level.starTotal > 0 && (
+					<Text
+						dimColor
+					>{`${GAME_ICONS.star} ${STAR.MIN_COUNT}+ contribution days shine — grab one and for ${STAR.DURATION_S}s the level can't touch you`}</Text>
+				)}
 				<Text color={theme.accent}>{`[space] start · [${HUD_INPUT.quit}] quit`}</Text>
 			</Box>
 		);
@@ -182,14 +190,18 @@ export function Game({
 	// half-row motion a whole-cell character can't do, the head carries the
 	// identity. It floats in whole-row steps (ceil of the body's top edge).
 	const headRow = spriteRow + (spriteHalf ? 2 : 1);
-	// Death swaps the glyph for the HUD's own ☠, in ember red — whoever you
-	// played as, the level keeps a skull where it got you.
-	const playerGlyph = w.status === "dead" ? GAME_ICONS.bug : chosen.glyph;
-	const playerColor = w.status === "dead" ? FIRE_RAMP[0] : FIRE_RAMP[3];
 	const ghostColor = scaleHex(theme.levels[2], 0.5);
 	// Flames flicker by cycling the fire ramp — a pure function of elapsed
 	// time (the animation contract), and what makes ♦ read as fire at speed.
 	const flameColor = FIRE_RAMP[Math.floor(w.elapsed * 8) % FIRE_RAMP.length];
+	// Uncollected stars pulse gold ↔ dim gold — slower than the flame flicker,
+	// so the two collectibles read differently at a glance.
+	const starColor = Math.floor(w.elapsed * 4) % 2 === 0 ? STAR_COLOR : scaleHex(STAR_COLOR, 0.55);
+	// Death swaps the glyph for the HUD's own ☠, in ember red — whoever you
+	// played as, the level keeps a skull where it got you. While starred the
+	// whole sprite cycles the fire ramp: the flames' flicker, promoted to you.
+	const playerGlyph = w.status === "dead" ? GAME_ICONS.bug : chosen.glyph;
+	const playerColor = w.status === "dead" ? FIRE_RAMP[0] : w.starS > 0 ? flameColor : FIRE_RAMP[3];
 	const fluidCh = PIT_FLUIDS[theme.name][Math.floor(w.elapsed * 2) % 2]!;
 	const fluidColor = theme.name === "fire" ? FIRE_RAMP[0] : theme.name === "ocean" ? theme.levels[2] : ghostColor;
 
@@ -240,6 +252,14 @@ export function Game({
 			if (cell?.flame && !w.collected.has(day) && rowFromBottom === height) {
 				ch = GAME_ICONS.flame; // collectible flame — a ♦ that flickers by cycling the fire ramp
 				color = flameColor;
+			}
+			if (cell?.star && !w.stars.has(day) && rowFromBottom === height) {
+				// The invincibility ★, drawn after the flame because a 15+ day is
+				// usually inside a streak — the rarer collectible wins the cell.
+				// Left cell only (the flag rule); the right clears so a star-on-
+				// flame day reads ★, not ★♦.
+				ch = (baseChar + c) % COLUMN_WIDTH === 0 ? GAME_ICONS.star : " ";
+				color = starColor;
 			}
 			const flagPassed = flags.get(day);
 			if (flagPassed !== undefined && rowFromBottom === height) {

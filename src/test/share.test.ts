@@ -15,6 +15,7 @@ function makeLevel(): GameLevel {
 		height: 1,
 		ghost: false,
 		flame: false,
+		star: false,
 	}));
 	return {
 		columns,
@@ -25,6 +26,7 @@ function makeLevel(): GameLevel {
 		],
 		finishColumn: 89,
 		flameTotal: 10,
+		starTotal: 0,
 		currentStreak: 0,
 	};
 }

@@ -18,6 +18,7 @@ function makeLevel(): GameLevel {
 		height: i >= 20 && i <= 22 ? 0 : 1,
 		ghost: false,
 		flame: i === 30,
+		star: false,
 	}));
 	return {
 		columns,
@@ -27,6 +28,7 @@ function makeLevel(): GameLevel {
 		],
 		finishColumn: 89,
 		flameTotal: 1,
+		starTotal: 0,
 		currentStreak: 0, // 2 base hearts → two pit deaths end the run
 	};
 }

@@ -179,8 +179,16 @@ describe("buildLevel", () => {
 			checkpoints: [],
 			finishColumn: -1,
 			flameTotal: 0,
+			starTotal: 0,
 			currentStreak: 0,
 		});
+	});
+
+	test("15+ contribution days shine as ★; a merely decent day doesn't", () => {
+		const days = makeDays([1, 1, 1, 14, 15, 30, 1]);
+		const level = buildLevel(days, { today: lastDate(days) });
+		expect(level.columns.map((c) => c.star)).toEqual([false, false, false, false, true, true, false]);
+		expect(level.starTotal).toBe(2);
 	});
 
 	test("currentStreak counts the run ending at today — hearts fuel", () => {

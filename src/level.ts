@@ -1,5 +1,5 @@
 import { levelFor } from "@/heatmap";
-import { GAME } from "@/lib/game-consts";
+import { GAME, STAR } from "@/lib/game-consts";
 import type { ContributionDay, GameLevel, LevelCheckpoint, LevelColumn } from "@/lib/types";
 import { currentStreak, localTodayISO } from "@/streak";
 
@@ -29,7 +29,7 @@ export function buildLevel(days: ContributionDay[], opts: BuildLevelOptions = {}
 	// ends at today's cell, so future days never become columns.
 	const sorted = days.filter((d) => d.date <= today).sort((a, b) => (a.date < b.date ? -1 : 1));
 	if (sorted.length === 0) {
-		return { columns: [], checkpoints: [], finishColumn: -1, flameTotal: 0, currentStreak: 0 };
+		return { columns: [], checkpoints: [], finishColumn: -1, flameTotal: 0, starTotal: 0, currentStreak: 0 };
 	}
 
 	// Repair pipeline: spawn pad → clamp cliffs → bridge pits, in that order.
@@ -59,11 +59,16 @@ export function buildLevel(days: ContributionDay[], opts: BuildLevelOptions = {}
 	for (const ghost of bridgeGhosts) ghosts.add(ghost);
 
 	const flames = flameDates(sorted);
+	// Stars need the raw count, not the 0–4 level — both fetch paths carry it
+	// (the scrape parses tooltip counts; only tooltip-less fragments degrade to
+	// the level as a coarse count, and then no day reaches STAR.MIN_COUNT — the
+	// game quietly has no stars rather than wrong ones).
 	const columns: LevelColumn[] = sorted.map((d, i) => ({
 		date: d.date,
 		level: levelFor(d.count),
 		height: heights[i]!,
 		flame: flames.has(d.date),
+		star: d.count >= STAR.MIN_COUNT,
 		ghost: ghosts.has(i),
 	}));
 
@@ -72,6 +77,7 @@ export function buildLevel(days: ContributionDay[], opts: BuildLevelOptions = {}
 		checkpoints: findCheckpoints(columns),
 		finishColumn: columns.length - 1,
 		flameTotal: flames.size,
+		starTotal: columns.filter((c) => c.star).length,
 		currentStreak: currentStreak(sorted, today),
 	};
 }

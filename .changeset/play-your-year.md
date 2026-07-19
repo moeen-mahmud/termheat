@@ -9,7 +9,10 @@ run ends at today's column. Auto-runner with one-button controls: [space]
 jumps, tap again mid-air for a double jump. Months are respawn checkpoints;
 dead months are spanned by dim ghost bridges so every real graph is beatable.
 
-Your streak is your health bar (2 hearts + 1 per streak week), death lines are
+Your streak is your health bar (2 hearts + 1 per streak week), and a 15+
+contribution day shines as a gold ★ — grab it and for three seconds the level
+can't touch you: walls become steps and pits grow a floor, so you sprint
+across the lava itself. Unless the timer runs out mid-pit. Death lines are
 dated — and roast you with `--shame` — and every run ends in a Wordle-style
 share card whose last line is the replay command: any public username is a
 level. `termheat play <user> --export svg|png` also writes the run card as an
