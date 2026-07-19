@@ -293,3 +293,32 @@ describe("flames, checkpoints, win", () => {
 		expect(w.status).toBe("won");
 	});
 });
+
+describe("share-card bookkeeping", () => {
+	test("runS keeps counting across respawns while elapsed resets", () => {
+		// A pit at 12–16 kills the default run; heights elsewhere are flat.
+		const heights = Array(40).fill(2).fill(0, 12, 17);
+		const level = makeLevel(heights, { currentStreak: 14 }); // extra hearts
+		const w = createEngine(level);
+		runUntil(w, level, () => false); // runs until the pit death
+		expect(w.status).toBe("dead");
+		const runSoFar = w.runS;
+		expect(runSoFar).toBeGreaterThan(0);
+		respawn(w, level);
+		expect(w.elapsed).toBe(0); // speed ramp restarts…
+		expect(w.runS).toBe(runSoFar); // …but the share clock never does
+		tick(w, level);
+		expect(w.runS).toBeGreaterThan(runSoFar);
+	});
+
+	test("every death lands in deathLog with its column", () => {
+		const heights = Array(40).fill(2).fill(0, 12, 17);
+		const level = makeLevel(heights, { currentStreak: 14 });
+		const w = createEngine(level);
+		runUntil(w, level, () => false);
+		expect(w.status).toBe("dead");
+		expect(w.deathLog).toHaveLength(1);
+		expect(w.deathLog[0]).toBe(w.deathColumn as number);
+		expect(w.deathLog[0]).toBeGreaterThanOrEqual(12);
+	});
+});

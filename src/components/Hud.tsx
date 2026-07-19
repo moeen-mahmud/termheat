@@ -1,14 +1,12 @@
 import { MONTHS } from "@/lib/const";
 import { type createEngine, speedAt } from "@/lib/engine";
-import { HUD_INPUT } from "@/lib/game-consts";
+import { HEART_COLOR, HUD_INPUT } from "@/lib/game-consts";
 import { GAME_EMOS, GAME_ICONS } from "@/lib/icons";
 import type { GameProps } from "@/lib/schema";
 import { deathLine } from "@/lib/shame";
+import { shareCard } from "@/lib/share";
 import { FIRE_RAMP } from "@/themes";
-import { Text } from "ink";
-
-/** GitHub's danger red — hearts must not read as collectible flames. */
-const HEART_COLOR = "#f85149";
+import { Box, Text } from "ink";
 
 export function Hud({
 	w,
@@ -28,9 +26,12 @@ export function Hud({
 
 	if (w.status === "won") {
 		return (
-			<Text color={accent}>
-				{`${GAME_EMOS.finish} You made it to today, ${username}! ${GAME_EMOS.flame} ${w.flames}/${level.flameTotal} flames · ${GAME_EMOS.skull} ${w.deaths} ${w.deaths === 1 ? "death" : "deaths"} · [${HUD_INPUT.quit}] quit`}
-			</Text>
+			<Box flexDirection="column">
+				<Text color={accent}>
+					{`${GAME_EMOS.finish} You made it to today, ${username}! Copy your run · [${HUD_INPUT.quit}] quit`}
+				</Text>
+				<Text>{shareCard(w, level, username)}</Text>
+			</Box>
 		);
 	}
 
@@ -38,10 +39,14 @@ export function Hud({
 		const date = level.columns[w.deathColumn ?? 0]?.date ?? "";
 		const line = deathLine(date, w.deathCause ?? "pit", shame);
 		if (w.status === "over") {
+			// A lost run still shares — Wordle's X/6 posts travel just as far.
 			return (
-				<Text color={FIRE_RAMP[0]}>
-					{`${GAME_ICONS.bug} ${line} Out of hearts — ${GAME_EMOS.heart} ${w.flames}/${level.flameTotal}, ${GAME_EMOS.skull} ${w.deaths} · [r] restart from January · [${HUD_INPUT.quit}] quit`}
-				</Text>
+				<Box flexDirection="column">
+					<Text color={FIRE_RAMP[0]}>
+						{`${GAME_ICONS.bug} ${line} Out of hearts · [${HUD_INPUT.restart}] restart from January · [${HUD_INPUT.quit}] quit`}
+					</Text>
+					<Text>{shareCard(w, level, username)}</Text>
+				</Box>
 			);
 		}
 		return (

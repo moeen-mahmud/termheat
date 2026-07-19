@@ -3,6 +3,9 @@
 // player can do" never drift apart: physics must clear a MAX_GAP pit and
 // climb a MAX_RISE step, and the repair pass promises nothing harder exists.
 
+/** GitHub's danger red — hearts must not read as collectible flames. */
+export const HEART_COLOR = "#f85149";
+
 export const HUD_INPUT = {
 	restart: "r",
 	jump: " ",

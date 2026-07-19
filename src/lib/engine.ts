@@ -81,11 +81,15 @@ export interface EngineState {
 	coyoteS: number;
 	/** Seconds survived this life — drives the speed ramp, resets on respawn. */
 	elapsed: number;
+	/** Seconds since January, across all lives — the share card's run clock. */
+	runS: number;
 	status: GameStatus;
 	deathCause?: DeathCause;
 	/** Column index the death happened at, for dated shame lines. */
 	deathColumn?: number;
 	deaths: number;
+	/** Column of every death this run — the share card grades months by these. */
+	deathLog: number[];
 	/** Flames collected, run-total; survives respawns — a lived day stays lived. */
 	flames: number;
 	collected: Set<number>;
@@ -118,8 +122,10 @@ export function createEngine(level: GameLevel): EngineState {
 		jumpBufferS: 0,
 		coyoteS: 0,
 		elapsed: 0,
+		runS: 0,
 		status: "running",
 		deaths: 0,
+		deathLog: [],
 		flames: 0,
 		collected: new Set(),
 		checkpoint: 0,
@@ -138,6 +144,7 @@ export function step(w: EngineState, level: GameLevel, dt: number, input: StepIn
 	if (input.jump) w.jumpBufferS = PHYSICS.JUMP_BUFFER_S;
 
 	w.elapsed += dt;
+	w.runS += dt;
 	w.x += speedAt(w.elapsed) * dt;
 
 	if (Math.floor(w.x) >= level.finishColumn) {
@@ -256,6 +263,7 @@ function die(w: EngineState, cause: DeathCause, column: number): void {
 	w.deathCause = cause;
 	w.deathColumn = column;
 	w.deaths++;
+	w.deathLog.push(column);
 }
 
 function collectFlames(w: EngineState, level: GameLevel, colL: number, colR: number): void {

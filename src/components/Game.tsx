@@ -1,9 +1,10 @@
 import { Hud } from "@/components/Hud";
 import { COLUMN_WIDTH, MONTHS } from "@/lib/const";
 import { createEngine, respawn, step } from "@/lib/engine";
-import { HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY } from "@/lib/game-consts";
-import { GAME_ICONS } from "@/lib/icons";
+import { HEART_COLOR, HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY } from "@/lib/game-consts";
+import { GAME_EMOS, GAME_ICONS } from "@/lib/icons";
 import { PIT_FLUIDS, type Chunk, type GameProps } from "@/lib/schema";
+import { monthYear } from "@/lib/share";
 import { FIRE_RAMP, scaleHex } from "@/themes";
 import { Box, Text, useApp, useInput, useStdin, useStdout } from "ink";
 import { useEffect, useRef, useState } from "react";
@@ -20,13 +21,22 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 	const { exit } = useApp();
 	const { stdout } = useStdout();
 	const { isRawModeSupported } = useStdin();
-	const [, setFrame] = useState(0);
+	const [_, setFrame] = useState(0);
+	// Title screen: the run waits for a deliberate space press — an auto-runner
+	// that starts the moment the process spawns steals the first two seconds
+	// from anyone still reading the controls. Demo (non-TTY) runs auto-start.
+	const [started, setStarted] = useState(!interactive);
 	const world = useRef(createEngine(level));
 	const jumpPressed = useRef(false);
 
 	useInput(
 		(input, key) => {
 			if (input === HUD_INPUT.quit) exit();
+			if (!started) {
+				// The start press must not double as the first jump.
+				if (input === HUD_INPUT.jump || key.upArrow) setStarted(true);
+				return;
+			}
 			if (input === HUD_INPUT.jump || key.upArrow) jumpPressed.current = true;
 			if (input === HUD_INPUT.restart && (world.current.status === "dead" || world.current.status === "over")) {
 				jumpPressed.current = false; // a buffered press must not fire at spawn
@@ -41,6 +51,7 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 	);
 
 	useEffect(() => {
+		if (!started) return; // no clock until the title screen is dismissed
 		const dt = 1 / fps;
 		let ticks = 0;
 		const id = setInterval(() => {
@@ -58,10 +69,30 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 			setFrame((f) => f + 1);
 		}, 1000 / fps);
 		return () => clearInterval(id);
-	}, [fps, level, maxFrames, interactive, exit]);
+	}, [fps, level, maxFrames, interactive, exit, started]);
 
 	const w = world.current;
 	const columns = level.columns;
+
+	if (!started) {
+		const span = `${monthYear(columns[0]?.date)} → ${monthYear(columns.at(-1)?.date)}`;
+		return (
+			<Box flexDirection="column" paddingY={1}>
+				<Text bold color={theme.accent}>{`${GAME_EMOS.flame} TERMHEAT · play your year`}</Text>
+				<Text>
+					{`${username} · ${span} · `}
+					<Text color={HEART_COLOR}>{GAME_ICONS.heart.repeat(w.heartsMax)}</Text>
+					{" · "}
+					<Text color={FIRE_RAMP[2]}>{`${GAME_ICONS.flame} ${level.flameTotal} flames`}</Text>
+				</Text>
+				<Text
+					dimColor
+				>{`you auto-run · [space] jump, again mid-air to double jump · ${GAME_ICONS.flag} months are checkpoints`}</Text>
+				<Text dimColor>{`hearts come from your current streak. keep shipping, respawn more`}</Text>
+				<Text color={theme.accent}>{`[space] start · [${HUD_INPUT.quit}] quit`}</Text>
+			</Box>
+		);
+	}
 	const width = Math.min((stdout?.columns ?? 80) - 2, 120);
 	const widthDays = Math.floor(width / COLUMN_WIDTH);
 
