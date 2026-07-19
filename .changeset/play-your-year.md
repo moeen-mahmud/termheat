@@ -28,5 +28,11 @@ your default (stable identity, identicon-style), [tab] on the title screen
 cycles the roster, and the pick persists to `~/.termheat.json`. Death leaves
 a `☠` where the level got you.
 
+And it sounds like a Game Boy: jump blips, pickup arpeggios, a death crunch,
+and a win fanfare, synthesized as real DMG channels (square waves with duty
+cycles, LFSR noise) — still zero dependencies, the WAVs are generated at
+startup and played through the OS. [m] or `--mute` for silence; piped runs
+never make a sound.
+
 Breaking: Node >= 22 is now required (Ink 7's floor). If you're on `npx`,
 nothing changes unless your Node is older than April 2024.
