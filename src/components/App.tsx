@@ -5,7 +5,6 @@ import { buildHeatmap } from "@/heatmap";
 import { useAnimation } from "@/hooks/useAnimation";
 import {
 	APP_NAME,
-	APP_VERSION,
 	ASCII_SPINNER,
 	COLUMN_WIDTH,
 	DEFAULT_REFRESH_INTERVAL_SECONDS,
@@ -115,7 +114,7 @@ export function App({ username, theme, watch, refreshMinutes, shame, animate, as
 			<Box marginLeft={2} marginBottom={1}>
 				<Text bold color={theme.accent}>
 					{ascii ? "" : "🔥 "}
-					{APP_NAME} v{APP_VERSION}
+					{APP_NAME} v2.0.0
 				</Text>
 				<Text> — {username}</Text>
 			</Box>
