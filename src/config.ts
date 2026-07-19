@@ -1,5 +1,6 @@
 import { APP_NAME, THEMES } from "@/lib/const";
 import type { TermheatConfig } from "@/lib/schema";
+import { SPRITES } from "@/lib/sprites";
 import type { ThemeName } from "@/lib/types";
 import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -48,5 +49,6 @@ function sanitize(raw: Record<string, unknown>): TermheatConfig {
 		config.refreshMinutes = raw.refreshMinutes;
 	}
 	if (typeof raw.shame === "boolean") config.shame = raw.shame;
+	if (SPRITES.some((s) => s.name === raw.sprite)) config.sprite = raw.sprite as string;
 	return config;
 }

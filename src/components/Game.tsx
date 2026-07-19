@@ -5,6 +5,7 @@ import { HEART_COLOR, HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY, TICK_INPUT } from "
 import { GAME_EMOS, GAME_ICONS } from "@/lib/icons";
 import { PIT_FLUIDS, type Chunk, type GameProps } from "@/lib/schema";
 import { monthYear } from "@/lib/share";
+import { nextSprite } from "@/lib/sprites";
 import { FIRE_RAMP, scaleHex } from "@/themes";
 import { Box, Text, useApp, useInput, useStdin, useStdout } from "ink";
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +18,18 @@ import { useEffect, useRef, useState } from "react";
  * half-row ▀/▄ sprite that doubles the jump arc's vertical resolution.
  */
 
-export function Game({ level, username, theme, interactive, maxFrames, fps, shame, onRunEnd }: GameProps) {
+export function Game({
+	level,
+	username,
+	theme,
+	sprite,
+	onSpriteChange,
+	interactive,
+	maxFrames,
+	fps,
+	shame,
+	onRunEnd,
+}: GameProps) {
 	const { exit } = useApp();
 	const { stdout } = useStdout();
 	const { isRawModeSupported } = useStdin();
@@ -35,13 +47,21 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 	// The run's per-tick input record. The engine is deterministic, so this
 	// log IS the run — --gif re-simulates it offline to render the replay.
 	const inputLog = useRef<number[]>([]);
+	// Who you play as: the hash/config default until [tab] says otherwise.
+	const [chosen, setChosen] = useState(sprite);
 
 	useInput(
 		(input, key) => {
 			if (input === HUD_INPUT.quit) exit();
 			if (!started) {
+				if (key.tab) setChosen((s) => nextSprite(s));
 				// The start press must not double as the first jump.
-				if (input === HUD_INPUT.jump || key.upArrow) setStarted(true);
+				if (input === HUD_INPUT.jump || key.upArrow) {
+					// A new pick becomes the standing one only once you commit to
+					// a run with it — cycling past a glyph shouldn't save it.
+					if (chosen.name !== sprite.name) onSpriteChange?.(chosen);
+					setStarted(true);
+				}
 				return;
 			}
 			// Handlers only raise flags; the world mutates exclusively in the
@@ -125,6 +145,14 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 					{" · "}
 					<Text color={FIRE_RAMP[2]}>{`${GAME_ICONS.flame} ${level.flameTotal} flames`}</Text>
 				</Text>
+				<Text>
+					{"you play as "}
+					<Text bold color={FIRE_RAMP[3]}>
+						{chosen.glyph}
+					</Text>
+					{` ${chosen.title}`}
+					{interactive && <Text dimColor>{" · [tab] to change"}</Text>}
+				</Text>
 				<Text
 					dimColor
 				>{`you auto-run · [space] jump, again mid-air to double jump · ${GAME_ICONS.flag} months are checkpoints`}</Text>
@@ -150,6 +178,13 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 	const quantized = Math.round(Math.max(w.y, 0) * 2) / 2;
 	const spriteRow = Math.floor(quantized);
 	const spriteHalf = quantized - spriteRow === 0.5;
+	// Your glyph rides one row above the block — the body keeps the smooth
+	// half-row motion a whole-cell character can't do, the head carries the
+	// identity. It floats in whole-row steps (ceil of the body's top edge).
+	const headRow = spriteRow + (spriteHalf ? 2 : 1);
+	// Death swaps the glyph for the HUD's own ☠, in ember red — whoever you
+	// played as, the level keeps a skull where it got you.
+	const playerGlyph = w.status === "dead" ? GAME_ICONS.bug : chosen.glyph;
 	const playerColor = w.status === "dead" ? FIRE_RAMP[0] : FIRE_RAMP[3];
 	const ghostColor = scaleHex(theme.levels[2], 0.5);
 	// Flames flicker by cycling the fire ramp — a pure function of elapsed
@@ -230,6 +265,12 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 					bg = spriteHalf && terrainDrawn ? terrainColor : undefined;
 				} else if (spriteHalf && rowFromBottom === spriteRow + 1) {
 					ch = GAME_ICONS.bridgeAlt;
+					color = playerColor;
+					bg = terrainDrawn ? terrainColor : undefined;
+				} else if (c === playerChar && rowFromBottom === headRow) {
+					// The head: one glyph on the left cell (like the flags), drawn
+					// last so labels and flames never paint over who you are.
+					ch = playerGlyph;
 					color = playerColor;
 					bg = terrainDrawn ? terrainColor : undefined;
 				}

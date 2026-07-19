@@ -28,6 +28,7 @@ describe("loadConfig", () => {
 				theme: "neon-zebra",
 				refreshMinutes: -5,
 				shame: true,
+				sprite: "dragon-not-in-roster",
 				futureOption: 42,
 			}),
 			"utf8",
@@ -46,6 +47,7 @@ describe("saveConfig", () => {
 			username: "moeen-mahmud",
 			theme: "fire" as const,
 			refreshMinutes: 5,
+			sprite: "knight",
 		};
 		await saveConfig(config, path);
 		expect(await loadConfig(path)).toEqual(config);

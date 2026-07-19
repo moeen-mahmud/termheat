@@ -1,5 +1,6 @@
 import type { EngineState } from "@/lib/engine";
 import { GAME_ICONS } from "@/lib/icons";
+import type { PlayerSprite } from "@/lib/sprites";
 import type { ContributionDay, ExportFormat, GameLevel, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
 
 export interface CliArgs {
@@ -35,6 +36,8 @@ export interface TermheatConfig {
 	theme?: ThemeName;
 	refreshMinutes?: number;
 	shame?: boolean;
+	/** `play` sprite pick by roster name (see sprites.ts); unset = hash default. */
+	sprite?: string;
 }
 
 /**
@@ -120,6 +123,14 @@ export interface GameProps {
 	level: GameLevel;
 	username: string;
 	theme: Theme;
+	/** The player's glyph (hash default or the config pick — see sprites.ts). */
+	sprite: PlayerSprite;
+	/**
+	 * Called when the run starts with a different sprite than it was given —
+	 * index.tsx persists the new pick to ~/.termheat.json. Best-effort:
+	 * failures are swallowed, a sprite choice must never break a run.
+	 */
+	onSpriteChange?: (sprite: PlayerSprite) => void;
 	/** Raw-mode input available (TTY). False = demo mode: auto-respawn, no keys. */
 	interactive: boolean;
 	/** Auto-exit after this many ticks; Infinity for interactive runs. */

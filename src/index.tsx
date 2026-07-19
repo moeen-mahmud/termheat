@@ -1,4 +1,4 @@
-import { ConfigError, configPath, loadConfig } from "@/config";
+import { ConfigError, configPath, loadConfig, saveConfig } from "@/config";
 import { exportCard, ExportError, exportRunCard, exportRunGif } from "@/export";
 import { fetchContributions, GitHubError } from "@/github";
 import { HELP, parseArgs } from "@/lib/args";
@@ -7,6 +7,7 @@ import { NO_COLOR } from "@/lib/env";
 import type { EngineState } from "@/lib/engine";
 import { PLAY_FPS } from "@/lib/game-consts";
 import type { TermheatConfig } from "@/lib/schema";
+import { spriteFor } from "@/lib/sprites";
 import { isStale, readCache, statusLine, writeCacheEntry } from "@/status";
 import { themeFor } from "@/themes";
 import { spawn } from "node:child_process";
@@ -161,6 +162,12 @@ if (args.command === "play") {
 				level={level}
 				username={username}
 				theme={theme}
+				sprite={spriteFor(username, config.sprite)}
+				onSpriteChange={(sprite) => {
+					// Best-effort persistence: the pick sticks for next time, but a
+					// read-only home directory must never interrupt a run.
+					saveConfig({ ...config, sprite: sprite.name }).catch(() => {});
+				}}
 				fps={PLAY_FPS}
 				interactive={isTTY}
 				maxFrames={isTTY ? Number.POSITIVE_INFINITY : 90}

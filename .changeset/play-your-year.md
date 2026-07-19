@@ -19,5 +19,11 @@ records the run (one input code per tick — the engine is deterministic, so
 the log IS the run) and re-renders it offline into a looping replay GIF,
 still zero dependencies: the GIF89a/LZW encoder is ~150 lines of TypeScript.
 
+You play as a glyph with character — `@` the rogue, `☻` the smiley, `♞` the
+knight, and five more, riding above the runner block. Your username hash picks
+your default (stable identity, identicon-style), [tab] on the title screen
+cycles the roster, and the pick persists to `~/.termheat.json`. Death leaves
+a `☠` where the level got you.
+
 Breaking: Node >= 22 is now required (Ink 7's floor). If you're on `npx`,
 nothing changes unless your Node is older than April 2024.
