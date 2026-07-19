@@ -1,5 +1,11 @@
 # termheat
 
+## 2.0.1
+
+### Patch Changes
+
+- 0fe0ed2: fix app version on the main view
+
 ## 2.0.0
 
 ### Major Changes
