@@ -12,7 +12,8 @@ export const HELP = `
   Commands:
     play                  🎮 Play your year — a platformer where your
                           contribution graph is the level. [space] jump.
-                          With ${CommandMaps.export.long}, writes your run card when the run ends.
+                          With ${CommandMaps.export.long}, writes your run card when the run ends;
+                          with ${CommandMaps.gif.long}, saves the whole run as a replay GIF.
 
   Options:
     ${CommandMaps.username.short}, ${CommandMaps.username.long} <name>   GitHub username (or set it in ~/.${APP_NAME}.json)
@@ -52,6 +53,7 @@ export function parseArgs(argv: string[]): CliArgs {
 		ascii: false,
 		status: false,
 		refreshCache: false,
+		gif: false,
 		errors: [],
 	};
 
@@ -102,6 +104,10 @@ export function parseArgs(argv: string[]): CliArgs {
 			case CommandMaps.refreshCache.long:
 				args.refreshCache = true;
 				break;
+			case CommandMaps.gif.short:
+			case CommandMaps.gif.long:
+				args.gif = true;
+				break;
 			case CommandMaps.export.short:
 			case CommandMaps.export.long: {
 				const value = argv[++i];
@@ -150,8 +156,18 @@ export function parseArgs(argv: string[]): CliArgs {
 	}
 
 	// Cross-flag rules live here (not index.tsx) so they stay unit-testable.
-	if (args.out && !args.export) {
-		args.errors.push(`${CommandMaps.out.long} requires ${CommandMaps.export.long}`);
+	if (args.out && !args.export && !args.gif) {
+		args.errors.push(`${CommandMaps.out.long} requires ${CommandMaps.export.long} or ${CommandMaps.gif.long}`);
+	}
+	if (args.out && args.export && args.gif) {
+		args.errors.push(
+			`${CommandMaps.out.long} is ambiguous with both ${CommandMaps.export.long} and ${CommandMaps.gif.long} — drop it and keep the default names`,
+		);
+	}
+	if (args.gif && args.command !== "play") {
+		args.errors.push(
+			`${CommandMaps.gif.long} records a play run — try: ${APP_NAME} play <user> ${CommandMaps.gif.long}`,
+		);
 	}
 	if (args.status && args.export) {
 		args.errors.push(`${CommandMaps.status.long} and ${CommandMaps.export.long} are different modes — pick one`);

@@ -1,5 +1,5 @@
 import { ConfigError, configPath, loadConfig } from "@/config";
-import { exportCard, ExportError, exportRunCard } from "@/export";
+import { exportCard, ExportError, exportRunCard, exportRunGif } from "@/export";
 import { fetchContributions, GitHubError } from "@/github";
 import { HELP, parseArgs } from "@/lib/args";
 import { APP_NAME, APP_VERSION, DEFAULT_THEME, STATUS_TTL_MINUTES } from "@/lib/const";
@@ -137,12 +137,25 @@ if (args.command === "play") {
 			process.exit(1);
 		}
 		const isTTY = process.stdout.isTTY === true;
-		// --export writes the run card when the run ends (won or out of hearts).
+		// --export writes the run card, --gif the replay, when the run ends
+		// (won or out of hearts). Both may be set; the note lists every path.
 		const exportFormat = args.export;
 		const onRunEnd =
-			exportFormat === undefined
+			exportFormat === undefined && !args.gif
 				? undefined
-				: (w: EngineState) => exportRunCard({ username, w, level, theme, format: exportFormat, out: args.out });
+				: async (w: EngineState, log: readonly number[]) => {
+						const paths: string[] = [];
+						if (exportFormat !== undefined) {
+							paths.push(
+								await exportRunCard({ username, w, level, theme, format: exportFormat, out: args.out }),
+							);
+						}
+						if (args.gif) {
+							const out = exportFormat === undefined ? args.out : undefined;
+							paths.push(await exportRunGif({ username, level, theme, log, fps: PLAY_FPS, out }));
+						}
+						return paths.join(" · ");
+					};
 		const { waitUntilExit } = render(
 			<Game
 				level={level}

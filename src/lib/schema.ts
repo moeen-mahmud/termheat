@@ -22,6 +22,8 @@ export interface CliArgs {
 	out?: string;
 	/** Print the cached one-line status (for tmux/starship) and exit. */
 	status: boolean;
+	/** `play` only: record the run's input log, write a replay GIF when it ends. */
+	gif: boolean;
 	/** Internal (spawned by --status): refetch, rewrite the cache, exit silently. */
 	refreshCache: boolean;
 	/** Human-readable problems; if non-empty the CLI prints them and exits 1. */
@@ -127,10 +129,21 @@ export interface GameProps {
 	shame: boolean;
 	/**
 	 * Called once when a run ends (won or out of hearts) — index.tsx uses it to
-	 * write the --export run card. Resolves to a note shown on the end screen
-	 * (the path written); rejections surface their message the same way.
+	 * write the --export run card and/or the --gif replay. `log` is the run's
+	 * per-tick TICK_INPUT record (the whole run, thanks to engine determinism).
+	 * Resolves to a note shown on the end screen (the paths written);
+	 * rejections surface their message the same way.
 	 */
-	onRunEnd?: (w: EngineState) => Promise<string>;
+	onRunEnd?: (w: EngineState, log: readonly number[]) => Promise<string>;
+}
+
+export interface ReplayGifOptions {
+	level: GameLevel;
+	theme: Theme;
+	/** TICK_INPUT codes, one per tick, as recorded by Game.tsx. */
+	log: readonly number[];
+	/** The tick rate the log was recorded at (PLAY_FPS). */
+	fps: number;
 }
 
 export interface AppProps {

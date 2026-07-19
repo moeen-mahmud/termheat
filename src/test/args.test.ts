@@ -153,4 +153,25 @@ describe("parseArgs: play subcommand", () => {
 		expect(args.command).toBeUndefined();
 		expect(args.username).toBe("play");
 	});
+
+	test("--gif records a play run as a replay GIF", () => {
+		const args = parseArgs(["play", "moeen", "--gif"]);
+		expect(args.errors).toEqual([]);
+		expect(args.gif).toBeTrue();
+		expect(parseArgs(["play", "moeen", "-g", "-o", "run.gif"]).errors).toEqual([]);
+	});
+
+	test("--gif without play is an error with a pointer to the right spelling", () => {
+		const errors = parseArgs(["moeen", "--gif"]).errors;
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain("play <user> --gif");
+	});
+
+	test("--out is ambiguous when both --export and --gif want to write", () => {
+		const errors = parseArgs(["play", "moeen", "-e", "svg", "--gif", "-o", "x"]).errors;
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain("ambiguous");
+		// Without --out they compose fine — card and replay, default names.
+		expect(parseArgs(["play", "moeen", "-e", "svg", "--gif"]).errors).toEqual([]);
+	});
 });

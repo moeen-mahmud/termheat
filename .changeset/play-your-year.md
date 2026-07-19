@@ -13,7 +13,11 @@ Your streak is your health bar (2 hearts + 1 per streak week), death lines are
 dated — and roast you with `--shame` — and every run ends in a Wordle-style
 share card whose last line is the replay command: any public username is a
 level. `termheat play <user> --export svg|png` also writes the run card as an
-image when the run ends.
+image when the run ends — a miniature of the level itself, with your deaths
+scarred in and your sprite where the run ended. `termheat play <user> --gif`
+records the run (one input code per tick — the engine is deterministic, so
+the log IS the run) and re-renders it offline into a looping replay GIF,
+still zero dependencies: the GIF89a/LZW encoder is ~150 lines of TypeScript.
 
 Breaking: Node >= 22 is now required (Ink 7's floor). If you're on `npx`,
 nothing changes unless your Node is older than April 2024.

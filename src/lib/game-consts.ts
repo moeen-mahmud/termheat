@@ -13,6 +13,18 @@ export const HUD_INPUT = {
 	help: "h",
 } as const;
 
+/**
+ * `--gif` input-log codes, one per tick. The engine is deterministic, so a
+ * whole run IS this log: Game.tsx records it as it steps, replay.ts feeds it
+ * back through the same engine to re-render the run offline. A restart wipes
+ * the log — the GIF covers the run that actually ended.
+ */
+export const TICK_INPUT = {
+	idle: 0,
+	jump: 1,
+	respawn: 2,
+} as const;
+
 export const GAME = {
 	/** Steepest climb the repair pass leaves standing, in rows. */
 	MAX_RISE: 2,
@@ -46,3 +58,19 @@ export const PLAYER_SCREEN_DAY = 10; // sprite sits this many day-columns in fro
 
 /** Altitude assigned while over a pit — far enough down that y < -1 = dead. */
 export const NO_FLOOR = -10;
+
+export const REPLAY = {
+	/** Days visible per frame — matches a ~112-column terminal viewport. */
+	VIEW_DAYS: 56,
+	DAY_PX: 8,
+	ROW_PX: 10,
+	/** Rasterize every Nth tick: a 20fps simulation becomes a 10fps GIF. */
+	SAMPLE_EVERY: 2,
+	/** Longest a deduplicated still frame may pause, in hundredths of a second. */
+	STILL_CAP_CS: 100,
+	/** Extra hold on the final frame before the loop restarts. */
+	HOLD_CS: 150,
+} as const;
+
+export const REPLAY_FRAME_WIDTH = REPLAY.VIEW_DAYS * REPLAY.DAY_PX;
+export const REPLAY_FRAME_HEIGHT = PF_ROWS * REPLAY.ROW_PX;
