@@ -11,11 +11,12 @@
 		"bin"
 	],
 	"engines": {
-		"node": ">=20"
+		"node": ">=22"
 	},
 	"scripts": {
 		"dev": "bun run src/index.tsx",
 		"dev:self": "bun run src/index.tsx moeen-mahmud",
+		"dev:play": "bun run src/index.tsx play moeen-mahmud",
 		"spike": "bun run src/spike-play.tsx",
 		"build:spike": "bun build src/spike-play.tsx --target=node --outdir=dist",
 		"bin": "node ./bin/termheat.js",

@@ -7,19 +7,15 @@
 const DEFAULT_HEADERS = { "user-agent": "termheat" };
 
 export const apiInstance = {
-  get(url: string, headers: Record<string, string> = {}): Promise<Response> {
-    return fetch(url, { headers: { ...DEFAULT_HEADERS, ...headers } });
-  },
+	get(url: string, headers: Record<string, string> = {}): Promise<Response> {
+		return fetch(url, { headers: { ...DEFAULT_HEADERS, ...headers } });
+	},
 
-  post(
-    url: string,
-    body: Record<string, unknown>,
-    headers: Record<string, string> = {},
-  ): Promise<Response> {
-    return fetch(url, {
-      method: "POST",
-      headers: { ...DEFAULT_HEADERS, "content-type": "application/json", ...headers },
-      body: JSON.stringify(body),
-    });
-  },
+	post(url: string, body: Record<string, unknown>, headers: Record<string, string> = {}): Promise<Response> {
+		return fetch(url, {
+			method: "POST",
+			headers: { ...DEFAULT_HEADERS, "content-type": "application/json", ...headers },
+			body: JSON.stringify(body),
+		});
+	},
 };

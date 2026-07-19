@@ -1,6 +1,8 @@
-import type { ContributionDay, ExportFormat, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
+import type { ContributionDay, ExportFormat, GameLevel, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
 
 export interface CliArgs {
+	/** Positional subcommand verb; undefined = the classic heatmap TUI. */
+	command?: "play";
 	username?: string;
 	theme?: ThemeName;
 	watch: boolean;
@@ -89,6 +91,17 @@ export interface StatsBarProps {
 	refreshing: boolean;
 	interactive: boolean;
 	ascii: boolean;
+}
+
+export interface GameProps {
+	level: GameLevel;
+	username: string;
+	theme: Theme;
+	/** Raw-mode input available (TTY). False = demo mode: auto-respawn, no keys. */
+	interactive: boolean;
+	/** Auto-exit after this many ticks; Infinity for interactive runs. */
+	maxFrames: number;
+	fps: number;
 }
 
 export interface AppProps {

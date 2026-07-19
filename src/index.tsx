@@ -1,13 +1,14 @@
-import { spawn } from "node:child_process";
 import { ConfigError, configPath, loadConfig } from "@/config";
-import { ExportError, exportCard } from "@/export";
+import { exportCard, ExportError } from "@/export";
 import { fetchContributions, GitHubError } from "@/github";
 import { HELP, parseArgs } from "@/lib/args";
 import { APP_NAME, APP_VERSION, DEFAULT_THEME, STATUS_TTL_MINUTES } from "@/lib/const";
 import { NO_COLOR } from "@/lib/env";
+import { PLAY_FPS } from "@/lib/game-consts";
 import type { TermheatConfig } from "@/lib/schema";
 import { isStale, readCache, statusLine, writeCacheEntry } from "@/status";
 import { themeFor } from "@/themes";
+import { spawn } from "node:child_process";
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -110,6 +111,45 @@ if (args.export) {
 		process.exit(0);
 	} catch (err) {
 		if (err instanceof ExportError || err instanceof GitHubError) {
+			console.error(`${APP_NAME}: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+// termheat play — the graph as a platformer level. Fetch → build the level →
+// hand the simulation to <Game />. Non-TTY runs are demo mode: 90 frames,
+// auto-respawn, then exit — so CI can smoke-test the real code path.
+if (args.command === "play") {
+	try {
+		const days = await fetchContributions(username);
+		const [{ render }, { Game }, { buildLevel }] = await Promise.all([
+			import("ink"),
+			import("@/components/Game"),
+			import("@/level"),
+		]);
+		const level = buildLevel(days);
+		if (level.columns.length === 0) {
+			console.error(`${APP_NAME}: ${username} has no contribution days to play yet`);
+			process.exit(1);
+		}
+		const isTTY = process.stdout.isTTY === true;
+		const { waitUntilExit } = render(
+			<Game
+				level={level}
+				username={username}
+				theme={theme}
+				fps={PLAY_FPS}
+				interactive={isTTY}
+				maxFrames={isTTY ? Number.POSITIVE_INFINITY : 90}
+			/>,
+			{ alternateScreen: isTTY, maxFps: 60 },
+		);
+		await waitUntilExit();
+		process.exit(0);
+	} catch (err) {
+		if (err instanceof GitHubError) {
 			console.error(`${APP_NAME}: ${err.message}`);
 			process.exit(1);
 		}

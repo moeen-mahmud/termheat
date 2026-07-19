@@ -2,7 +2,7 @@ import { buildHeatmap } from "@/heatmap";
 import { APP_NAME, MONTHS } from "@/lib/const";
 import type { Theme } from "@/lib/schema";
 import type { ContributionDay, Week } from "@/lib/types";
-import { currentStreakDates, totalContributions } from "@/streak";
+import { currentStreakDates } from "@/streak";
 import { FIRE_RAMP } from "@/themes";
 
 /**

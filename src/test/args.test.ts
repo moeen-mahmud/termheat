@@ -107,3 +107,44 @@ describe("parseArgs", () => {
 		expect(args.errors).toEqual([]);
 	});
 });
+
+describe("parseArgs: play subcommand", () => {
+	test("play verb is consumed, next positional is the username", () => {
+		const args = parseArgs(["play", "octocat"]);
+		expect(args.command).toBe("play");
+		expect(args.username).toBe("octocat");
+		expect(args.errors).toEqual([]);
+	});
+
+	test("play works with no username (config may supply it)", () => {
+		const args = parseArgs(["play"]);
+		expect(args.command).toBe("play");
+		expect(args.username).toBeUndefined();
+		expect(args.errors).toEqual([]);
+	});
+
+	test("play composes with flags", () => {
+		const args = parseArgs(["play", "octocat", "--theme", "fire"]);
+		expect(args.command).toBe("play");
+		expect(args.theme).toBe("fire");
+		expect(args.errors).toEqual([]);
+	});
+
+	test("'play' only counts as a verb in first position", () => {
+		const args = parseArgs(["octocat", "play"]);
+		expect(args.command).toBeUndefined();
+		expect(args.errors[0]).toContain("play"); // second positional, rejected
+	});
+
+	test("modes that bypass the TUI don't apply to play", () => {
+		expect(parseArgs(["play", "-e", "svg"]).errors[0]).toContain("play");
+		expect(parseArgs(["play", "-S"]).errors[0]).toContain("play");
+		expect(parseArgs(["play", "-w"]).errors[0]).toContain("play");
+	});
+
+	test("a user actually named 'play' is reachable via -u", () => {
+		const args = parseArgs(["-u", "play"]);
+		expect(args.command).toBeUndefined();
+		expect(args.username).toBe("play");
+	});
+});

@@ -7,6 +7,11 @@ export const HELP = `
   🔥 ${APP_NAME} v${APP_VERSION} — animated terminal heatmap of your GitHub contributions
 
   Usage: ${APP_NAME} [username] [options]
+         ${APP_NAME} play [username]
+
+  Commands:
+    play                  🎮 Play your year — a platformer where your
+                          contribution graph is the level. [space] jump.
 
   Options:
     ${CommandMaps.username.short}, ${CommandMaps.username.long} <name>   GitHub username (or set it in ~/.${APP_NAME}.json)
@@ -25,6 +30,7 @@ export const HELP = `
   Examples:
     npx ${APP_NAME} <your-username>
     npx ${APP_NAME} <your-username> ${CommandMaps.watch.long} ${CommandMaps.theme.long} fire ${CommandMaps.shame.long}
+    npx ${APP_NAME} play <your-username>
 
   Tip: set GITHUB_TOKEN for exact counts via the GraphQL API.
   Honors NO_COLOR (https://no-color.org) — implies ${CommandMaps.ascii.long} + ${CommandMaps.noAnimation.long}.
@@ -47,6 +53,14 @@ export function parseArgs(argv: string[]): CliArgs {
 		refreshCache: false,
 		errors: [],
 	};
+
+	// Subcommand verbs are consumed before the flag loop, so the rest of the
+	// grammar (bare positional = username, flags anywhere) applies unchanged.
+	// Future verbs (wrapped, zen) extend this same check.
+	if (argv[0] === "play") {
+		args.command = "play";
+		argv = argv.slice(1);
+	}
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
@@ -140,6 +154,15 @@ export function parseArgs(argv: string[]): CliArgs {
 	}
 	if (args.status && args.export) {
 		args.errors.push(`${CommandMaps.status.long} and ${CommandMaps.export.long} are different modes — pick one`);
+	}
+	if (args.command === "play") {
+		for (const [flag, set] of [
+			[CommandMaps.export.long, args.export !== undefined],
+			[CommandMaps.status.long, args.status],
+			[CommandMaps.watch.long, args.watch],
+		] as const) {
+			if (set) args.errors.push(`${flag} doesn't apply to play`);
+		}
 	}
 
 	return args;
