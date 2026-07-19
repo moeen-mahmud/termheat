@@ -1,5 +1,8 @@
 import { APP_NAME } from "@/lib/const";
-import type { ExportOptions } from "@/lib/schema";
+import type { ExportOptions, ReplayGifOptions } from "@/lib/schema";
+import type { ExportFormat } from "@/lib/types";
+import { renderReplayGif } from "@/replay";
+import { renderRunCard, type RunCardOptions } from "@/run-card";
 import { renderSvgCard } from "@/svg";
 import { writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -17,8 +20,27 @@ export async function exportCard(opts: ExportOptions): Promise<string> {
 		// A PNG is one frame by definition — never embed animation CSS in it.
 		animate: opts.animate && opts.format === "svg",
 	});
-	const path = resolve(opts.out ?? `${APP_NAME}-${opts.username}.${opts.format}`);
-	if (opts.format === "svg") {
+	return writeCard(svg, opts.format, resolve(opts.out ?? `${APP_NAME}-${opts.username}.${opts.format}`));
+}
+
+/**
+ * Writes the `play --export` run card once a run ends. The "-play-" in the
+ * default filename keeps it from clobbering the heatmap card of the same user.
+ */
+export async function exportRunCard(opts: RunCardOptions & { format: ExportFormat; out?: string }): Promise<string> {
+	const svg = renderRunCard(opts);
+	return writeCard(svg, opts.format, resolve(opts.out ?? `${APP_NAME}-play-${opts.username}.${opts.format}`));
+}
+
+/** Writes the `play --gif` replay when a run ends. Zero deps — see replay.ts. */
+export async function exportRunGif(opts: ReplayGifOptions & { username: string; out?: string }): Promise<string> {
+	const path = resolve(opts.out ?? `${APP_NAME}-play-${opts.username}.gif`);
+	await writeFile(path, renderReplayGif(opts));
+	return path;
+}
+
+async function writeCard(svg: string, format: ExportFormat, path: string): Promise<string> {
+	if (format === "svg") {
 		await writeFile(path, svg, "utf8");
 	} else {
 		await writeFile(path, await renderPng(svg));

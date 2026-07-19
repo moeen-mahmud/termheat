@@ -1,6 +1,12 @@
-import type { ContributionDay, ExportFormat, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
+import type { EngineState } from "@/lib/engine";
+import { GAME_ICONS } from "@/lib/icons";
+import type { PlayerSprite } from "@/lib/sprites";
+import type { ContributionDay, ExportFormat, GameLevel, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
+import type { Sound } from "@/sound";
 
 export interface CliArgs {
+	/** Positional subcommand verb; undefined = the classic heatmap TUI. */
+	command?: "play";
 	username?: string;
 	theme?: ThemeName;
 	watch: boolean;
@@ -18,6 +24,10 @@ export interface CliArgs {
 	out?: string;
 	/** Print the cached one-line status (for tmux/starship) and exit. */
 	status: boolean;
+	/** `play` only: record the run's input log, write a replay GIF when it ends. */
+	gif: boolean;
+	/** `play` only: start with sound off ([m] can still turn it back on). */
+	mute: boolean;
 	/** Internal (spawned by --status): refetch, rewrite the cache, exit silently. */
 	refreshCache: boolean;
 	/** Human-readable problems; if non-empty the CLI prints them and exits 1. */
@@ -29,6 +39,8 @@ export interface TermheatConfig {
 	theme?: ThemeName;
 	refreshMinutes?: number;
 	shame?: boolean;
+	/** `play` sprite pick by roster name (see sprites.ts); unset = hash default. */
+	sprite?: string;
 }
 
 /**
@@ -89,6 +101,68 @@ export interface StatsBarProps {
 	refreshing: boolean;
 	interactive: boolean;
 	ascii: boolean;
+}
+
+/**
+ * A chunk of text with optional foreground and background colors. Ink's `<Text>` supports a `backgroundColor` prop, but it doesn't support a `bg` shorthand, so we use `bg` here to avoid confusion with Ink's `backgroundColor`.
+ */
+export interface Chunk {
+	text: string;
+	color?: string;
+	bg?: string;
+}
+
+// Themes double as tilesets: what fills a pit tells you what falls into it.
+// Two chars alternate on elapsed time so the fluid bubbles/laps. Every theme
+// marks its pit floors — pits must telegraph, whatever the palette.
+export const PIT_FLUIDS: Record<ThemeName, [string, string]> = {
+	fire: [GAME_ICONS.pitFloorAlt, GAME_ICONS.pitFloor], // lava world
+	ocean: [GAME_ICONS.pitFloorWater, GAME_ICONS.pitFloorWaterAlt], // water world
+	github: [GAME_ICONS.pitFloor, GAME_ICONS.pitFloor],
+	mono: [GAME_ICONS.pitFloor, GAME_ICONS.pitFloor],
+};
+
+export interface GameProps {
+	level: GameLevel;
+	username: string;
+	theme: Theme;
+	/** The player's glyph (hash default or the config pick — see sprites.ts). */
+	sprite: PlayerSprite;
+	/**
+	 * Called when the run starts with a different sprite than it was given —
+	 * index.tsx persists the new pick to ~/.termheat.json. Best-effort:
+	 * failures are swallowed, a sprite choice must never break a run.
+	 */
+	onSpriteChange?: (sprite: PlayerSprite) => void;
+	/** Raw-mode input available (TTY). False = demo mode: auto-respawn, no keys. */
+	interactive: boolean;
+	/**
+	 * Play-mode SFX (sound.ts). Optional so tests and demo runs skip it; the
+	 * component treats "no sound object" exactly like a muted one.
+	 */
+	sound?: Sound;
+	/** Auto-exit after this many ticks; Infinity for interactive runs. */
+	maxFrames: number;
+	fps: number;
+	/** Roast-grade death lines. Off = dry, factual ones (shame is opt-in). */
+	shame: boolean;
+	/**
+	 * Called once when a run ends (won or out of hearts) — index.tsx uses it to
+	 * write the --export run card and/or the --gif replay. `log` is the run's
+	 * per-tick TICK_INPUT record (the whole run, thanks to engine determinism).
+	 * Resolves to a note shown on the end screen (the paths written);
+	 * rejections surface their message the same way.
+	 */
+	onRunEnd?: (w: EngineState, log: readonly number[]) => Promise<string>;
+}
+
+export interface ReplayGifOptions {
+	level: GameLevel;
+	theme: Theme;
+	/** TICK_INPUT codes, one per tick, as recorded by Game.tsx. */
+	log: readonly number[];
+	/** The tick rate the log was recorded at (PLAY_FPS). */
+	fps: number;
 }
 
 export interface AppProps {

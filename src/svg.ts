@@ -2,7 +2,7 @@ import { buildHeatmap } from "@/heatmap";
 import { APP_NAME, MONTHS } from "@/lib/const";
 import type { Theme } from "@/lib/schema";
 import type { ContributionDay, Week } from "@/lib/types";
-import { currentStreakDates, totalContributions } from "@/streak";
+import { currentStreakDates } from "@/streak";
 import { FIRE_RAMP } from "@/themes";
 
 /**
@@ -35,13 +35,14 @@ const MONTH_ROW = 14;
 const FOOTER = 24; // credit line
 const PAD = 12;
 
-// Card chrome, independent of theme: GitHub dark-dimmed canvas.
-const BG = "#0d1117";
-const BORDER = "#30363d";
-const TEXT = "#c9d1d9";
-const MUTED = "#8b949e";
+// Card chrome, independent of theme: GitHub dark-dimmed canvas. Exported so
+// the play run card (run-card.ts) shares the exact same skin.
+export const BG = "#0d1117";
+export const BORDER = "#30363d";
+export const TEXT = "#c9d1d9";
+export const MUTED = "#8b949e";
 
-const FONT = `font-family="-apple-system, 'Segoe UI', Ubuntu, Helvetica, Arial, sans-serif"`;
+export const FONT = `font-family="-apple-system, 'Segoe UI', Ubuntu, Helvetica, Arial, sans-serif"`;
 
 const REVEAL_MS = 450; // per-column fade duration
 const REVEAL_STAGGER_MS = 22; // delay step between columns (~1.2s full wipe)

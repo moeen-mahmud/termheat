@@ -25,6 +25,20 @@ export const CHARS = ["··", "██", "██", "██", "██"] as const;
 export const ASCII_CHARS = ["..", "--", "++", "**", "##"] as const;
 export const WEEKDAY_LABELS = ["   ", "Mon", "   ", "Wed", "   ", "Fri", "   "];
 export const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+export const FULL_MONTHS = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+] as const;
 
 // --status sparkline ramps, quietest → loudest. Lengths may differ; the
 // sparkline maps counts onto whichever ramp it's given.

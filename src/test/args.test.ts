@@ -107,3 +107,85 @@ describe("parseArgs", () => {
 		expect(args.errors).toEqual([]);
 	});
 });
+
+describe("parseArgs: play subcommand", () => {
+	test("play verb is consumed, next positional is the username", () => {
+		const args = parseArgs(["play", "octocat"]);
+		expect(args.command).toBe("play");
+		expect(args.username).toBe("octocat");
+		expect(args.errors).toEqual([]);
+	});
+
+	test("play works with no username (config may supply it)", () => {
+		const args = parseArgs(["play"]);
+		expect(args.command).toBe("play");
+		expect(args.username).toBeUndefined();
+		expect(args.errors).toEqual([]);
+	});
+
+	test("play composes with flags", () => {
+		const args = parseArgs(["play", "octocat", "--theme", "fire"]);
+		expect(args.command).toBe("play");
+		expect(args.theme).toBe("fire");
+		expect(args.errors).toEqual([]);
+	});
+
+	test("'play' only counts as a verb in first position", () => {
+		const args = parseArgs(["octocat", "play"]);
+		expect(args.command).toBeUndefined();
+		expect(args.errors[0]).toContain("play"); // second positional, rejected
+	});
+
+	test("modes that bypass the TUI don't apply to play", () => {
+		expect(parseArgs(["play", "-S"]).errors[0]).toContain("play");
+		expect(parseArgs(["play", "-w"]).errors[0]).toContain("play");
+	});
+
+	test("--export applies to play — it writes the end-of-run card", () => {
+		const args = parseArgs(["play", "moeen", "-e", "svg", "-o", "run.svg"]);
+		expect(args.errors).toEqual([]);
+		expect(args.export).toBe("svg");
+		expect(args.out).toBe("run.svg");
+	});
+
+	test("a user actually named 'play' is reachable via -u", () => {
+		const args = parseArgs(["-u", "play"]);
+		expect(args.command).toBeUndefined();
+		expect(args.username).toBe("play");
+	});
+
+	test("--gif records a play run as a replay GIF", () => {
+		const args = parseArgs(["play", "moeen", "--gif"]);
+		expect(args.errors).toEqual([]);
+		expect(args.gif).toBeTrue();
+		expect(parseArgs(["play", "moeen", "-g", "-o", "run.gif"]).errors).toEqual([]);
+	});
+
+	test("--gif without play is an error with a pointer to the right spelling", () => {
+		const errors = parseArgs(["moeen", "--gif"]).errors;
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain("play <user> --gif");
+	});
+
+	test("--mute starts a play run silent", () => {
+		const args = parseArgs(["play", "moeen", "--mute"]);
+		expect(args.errors).toEqual([]);
+		expect(args.mute).toBeTrue();
+		expect(parseArgs(["play", "moeen", "-m"]).mute).toBeTrue();
+		expect(parseArgs(["play", "moeen"]).mute).toBeFalse();
+	});
+
+	test("--mute without play is an error — the heatmap has no sound", () => {
+		const errors = parseArgs(["moeen", "--mute"]).errors;
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain("--mute");
+	});
+
+	test("--out is ambiguous when both --export and --gif want to write", () => {
+		const errors = parseArgs(["play", "moeen", "-e", "svg", "--gif", "-o", "x"]).errors;
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain("ambiguous");
+		// Without --out they compose fine — card and replay, default names.
+		expect(parseArgs(["play", "moeen", "-e", "svg", "--gif"]).errors).toEqual([]);
+	});
+});

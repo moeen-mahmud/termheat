@@ -1,0 +1,32 @@
+export const GAME_ICONS = {
+	heart: "♥",
+	heartEmpty: "♡",
+	flame: "♦",
+	flag: "⚑",
+	finish: "░",
+	pitFloor: "▁",
+	pitFloorAlt: "▂",
+	pitFloorWater: "≈",
+	pitFloorWaterAlt: "~",
+	ghostBridge: "▀",
+	bridge: "█",
+	bridgeAlt: "▄",
+	bug: "☠",
+	bolt: "⚡",
+	star: "★",
+} as const;
+
+export const GAME_EMOS = {
+	heart: "❤️",
+	heartEmpty: "🤍",
+	flame: "🔥",
+	flag: "🚩",
+	finish: "🏁",
+	skull: "💀",
+	dyno: "🦖",
+	sparkles: "✨",
+	snail: "🐌",
+	cold: "🥶",
+	spiderWeb: "🕸️",
+	headstone: "🪦",
+};

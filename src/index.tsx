@@ -1,13 +1,16 @@
-import { spawn } from "node:child_process";
-import { ConfigError, configPath, loadConfig } from "@/config";
-import { ExportError, exportCard } from "@/export";
+import { ConfigError, configPath, loadConfig, saveConfig } from "@/config";
+import { exportCard, ExportError, exportRunCard, exportRunGif } from "@/export";
 import { fetchContributions, GitHubError } from "@/github";
 import { HELP, parseArgs } from "@/lib/args";
 import { APP_NAME, APP_VERSION, DEFAULT_THEME, STATUS_TTL_MINUTES } from "@/lib/const";
 import { NO_COLOR } from "@/lib/env";
+import type { EngineState } from "@/lib/engine";
+import { PLAY_FPS } from "@/lib/game-consts";
 import type { TermheatConfig } from "@/lib/schema";
+import { spriteFor } from "@/lib/sprites";
 import { isStale, readCache, statusLine, writeCacheEntry } from "@/status";
 import { themeFor } from "@/themes";
+import { spawn } from "node:child_process";
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -94,8 +97,9 @@ if (args.status) {
 	}
 }
 
-// --export bypasses Ink entirely: fetch, write the card, exit.
-if (args.export) {
+// --export bypasses Ink entirely: fetch, write the card, exit. Under `play`
+// the same flag means the end-of-run card instead — that route handles it.
+if (args.export && args.command !== "play") {
 	try {
 		const days = await fetchContributions(username);
 		const path = await exportCard({
@@ -110,6 +114,77 @@ if (args.export) {
 		process.exit(0);
 	} catch (err) {
 		if (err instanceof ExportError || err instanceof GitHubError) {
+			console.error(`${APP_NAME}: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+// termheat play — the graph as a platformer level. Fetch → build the level →
+// hand the simulation to <Game />. Non-TTY runs are demo mode: 90 frames,
+// auto-respawn, then exit — so CI can smoke-test the real code path.
+if (args.command === "play") {
+	try {
+		const days = await fetchContributions(username);
+		const [{ render }, { Game }, { buildLevel }, { createSound }] = await Promise.all([
+			import("ink"),
+			import("@/components/Game"),
+			import("@/level"),
+			import("@/sound"),
+		]);
+		const level = buildLevel(days);
+		if (level.columns.length === 0) {
+			console.error(`${APP_NAME}: ${username} has no contribution days to play yet`);
+			process.exit(1);
+		}
+		const isTTY = process.stdout.isTTY === true;
+		// Game Boy SFX, on by default — [m] and --mute silence them, non-TTY
+		// demo runs never even write the WAVs.
+		const sound = createSound({ enabled: isTTY, muted: args.mute });
+		// --export writes the run card, --gif the replay, when the run ends
+		// (won or out of hearts). Both may be set; the note lists every path.
+		const exportFormat = args.export;
+		const onRunEnd =
+			exportFormat === undefined && !args.gif
+				? undefined
+				: async (w: EngineState, log: readonly number[]) => {
+						const paths: string[] = [];
+						if (exportFormat !== undefined) {
+							paths.push(
+								await exportRunCard({ username, w, level, theme, format: exportFormat, out: args.out }),
+							);
+						}
+						if (args.gif) {
+							const out = exportFormat === undefined ? args.out : undefined;
+							paths.push(await exportRunGif({ username, level, theme, log, fps: PLAY_FPS, out }));
+						}
+						return paths.join(" · ");
+					};
+		const { waitUntilExit } = render(
+			<Game
+				level={level}
+				username={username}
+				theme={theme}
+				sprite={spriteFor(username, config.sprite)}
+				onSpriteChange={(sprite) => {
+					// Best-effort persistence: the pick sticks for next time, but a
+					// read-only home directory must never interrupt a run.
+					saveConfig({ ...config, sprite: sprite.name }).catch(() => {});
+				}}
+				fps={PLAY_FPS}
+				interactive={isTTY}
+				sound={sound}
+				maxFrames={isTTY ? Number.POSITIVE_INFINITY : 90}
+				shame={args.shame || config.shame === true}
+				onRunEnd={onRunEnd}
+			/>,
+			{ alternateScreen: isTTY, maxFps: 60 },
+		);
+		await waitUntilExit();
+		process.exit(0);
+	} catch (err) {
+		if (err instanceof GitHubError) {
 			console.error(`${APP_NAME}: ${err.message}`);
 			process.exit(1);
 		}

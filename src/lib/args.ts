@@ -7,6 +7,14 @@ export const HELP = `
   🔥 ${APP_NAME} v${APP_VERSION} — animated terminal heatmap of your GitHub contributions
 
   Usage: ${APP_NAME} [username] [options]
+         ${APP_NAME} play [username]
+
+  Commands:
+    play                  🎮 Play your year — a platformer where your
+                          contribution graph is the level. [space] jump.
+                          Game Boy sound on by default: [m] or ${CommandMaps.mute.long} for silence.
+                          With ${CommandMaps.export.long}, writes your run card when the run ends;
+                          with ${CommandMaps.gif.long}, saves the whole run as a replay GIF.
 
   Options:
     ${CommandMaps.username.short}, ${CommandMaps.username.long} <name>   GitHub username (or set it in ~/.${APP_NAME}.json)
@@ -25,6 +33,7 @@ export const HELP = `
   Examples:
     npx ${APP_NAME} <your-username>
     npx ${APP_NAME} <your-username> ${CommandMaps.watch.long} ${CommandMaps.theme.long} fire ${CommandMaps.shame.long}
+    npx ${APP_NAME} play <your-username>
 
   Tip: set GITHUB_TOKEN for exact counts via the GraphQL API.
   Honors NO_COLOR (https://no-color.org) — implies ${CommandMaps.ascii.long} + ${CommandMaps.noAnimation.long}.
@@ -45,8 +54,18 @@ export function parseArgs(argv: string[]): CliArgs {
 		ascii: false,
 		status: false,
 		refreshCache: false,
+		gif: false,
+		mute: false,
 		errors: [],
 	};
+
+	// Subcommand verbs are consumed before the flag loop, so the rest of the
+	// grammar (bare positional = username, flags anywhere) applies unchanged.
+	// Future verbs (wrapped, zen) extend this same check.
+	if (argv[0] === "play") {
+		args.command = "play";
+		argv = argv.slice(1);
+	}
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
@@ -86,6 +105,14 @@ export function parseArgs(argv: string[]): CliArgs {
 				break;
 			case CommandMaps.refreshCache.long:
 				args.refreshCache = true;
+				break;
+			case CommandMaps.gif.short:
+			case CommandMaps.gif.long:
+				args.gif = true;
+				break;
+			case CommandMaps.mute.short:
+			case CommandMaps.mute.long:
+				args.mute = true;
 				break;
 			case CommandMaps.export.short:
 			case CommandMaps.export.long: {
@@ -135,11 +162,34 @@ export function parseArgs(argv: string[]): CliArgs {
 	}
 
 	// Cross-flag rules live here (not index.tsx) so they stay unit-testable.
-	if (args.out && !args.export) {
-		args.errors.push(`${CommandMaps.out.long} requires ${CommandMaps.export.long}`);
+	if (args.out && !args.export && !args.gif) {
+		args.errors.push(`${CommandMaps.out.long} requires ${CommandMaps.export.long} or ${CommandMaps.gif.long}`);
+	}
+	if (args.out && args.export && args.gif) {
+		args.errors.push(
+			`${CommandMaps.out.long} is ambiguous with both ${CommandMaps.export.long} and ${CommandMaps.gif.long} — drop it and keep the default names`,
+		);
+	}
+	if (args.gif && args.command !== "play") {
+		args.errors.push(
+			`${CommandMaps.gif.long} records a play run — try: ${APP_NAME} play <user> ${CommandMaps.gif.long}`,
+		);
+	}
+	if (args.mute && args.command !== "play") {
+		args.errors.push(`${CommandMaps.mute.long} silences a play run — the heatmap never had sound`);
 	}
 	if (args.status && args.export) {
 		args.errors.push(`${CommandMaps.status.long} and ${CommandMaps.export.long} are different modes — pick one`);
+	}
+	// --export DOES apply to play (it writes the end-of-run card), so only the
+	// modes that replace the TUI entirely are rejected.
+	if (args.command === "play") {
+		for (const [flag, set] of [
+			[CommandMaps.status.long, args.status],
+			[CommandMaps.watch.long, args.watch],
+		] as const) {
+			if (set) args.errors.push(`${flag} doesn't apply to play`);
+		}
 	}
 
 	return args;

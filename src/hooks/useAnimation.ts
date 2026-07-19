@@ -8,20 +8,19 @@ import { useEffect, useState } from "react";
  * so piped/CI output renders once and exits cleanly.
  */
 export function useAnimation(enabled: boolean): AnimationFrame {
-  const [tick, setTick] = useState(0);
+	const [tick, setTick] = useState(0);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const id = setInterval(() => setTick((t) => t + 1), 1000 / FPS);
-    return () => clearInterval(id);
-  }, [enabled]);
+	useEffect(() => {
+		if (!enabled) return;
+		const id = setInterval(() => setTick((t) => t + 1), 1000 / FPS);
+		return () => clearInterval(id);
+	}, [enabled]);
 
-  if (!enabled) return { tick: 0, breathe: 1 };
-  return {
-    tick,
-    breathe:
-      0.5 + 0.5 * Math.sin((2 * Math.PI * tick) / (FPS * BREATHE_SECONDS)),
-  };
+	if (!enabled) return { tick: 0, breathe: 1 };
+	return {
+		tick,
+		breathe: 0.5 + 0.5 * Math.sin((2 * Math.PI * tick) / (FPS * BREATHE_SECONDS)),
+	};
 }
 
 /**
@@ -29,5 +28,5 @@ export function useAnimation(enabled: boolean): AnimationFrame {
  * data arrived — so the grid re-reveals on every refresh, not just at boot.
  */
 export function revealProgress(tick: number, sinceTick: number): number {
-  return Math.min(1, (tick - sinceTick) / (FPS * REVEAL_SECONDS));
+	return Math.min(1, (tick - sinceTick) / (FPS * REVEAL_SECONDS));
 }
