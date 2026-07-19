@@ -2,6 +2,7 @@ import type { EngineState } from "@/lib/engine";
 import { GAME_ICONS } from "@/lib/icons";
 import type { PlayerSprite } from "@/lib/sprites";
 import type { ContributionDay, ExportFormat, GameLevel, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
+import type { Sound } from "@/sound";
 
 export interface CliArgs {
 	/** Positional subcommand verb; undefined = the classic heatmap TUI. */
@@ -25,6 +26,8 @@ export interface CliArgs {
 	status: boolean;
 	/** `play` only: record the run's input log, write a replay GIF when it ends. */
 	gif: boolean;
+	/** `play` only: start with sound off ([m] can still turn it back on). */
+	mute: boolean;
 	/** Internal (spawned by --status): refetch, rewrite the cache, exit silently. */
 	refreshCache: boolean;
 	/** Human-readable problems; if non-empty the CLI prints them and exits 1. */
@@ -133,6 +136,11 @@ export interface GameProps {
 	onSpriteChange?: (sprite: PlayerSprite) => void;
 	/** Raw-mode input available (TTY). False = demo mode: auto-respawn, no keys. */
 	interactive: boolean;
+	/**
+	 * Play-mode SFX (sound.ts). Optional so tests and demo runs skip it; the
+	 * component treats "no sound object" exactly like a muted one.
+	 */
+	sound?: Sound;
 	/** Auto-exit after this many ticks; Infinity for interactive runs. */
 	maxFrames: number;
 	fps: number;

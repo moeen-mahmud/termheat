@@ -11,6 +11,7 @@ export const HUD_INPUT = {
 	jump: " ",
 	quit: "q",
 	help: "h",
+	mute: "m",
 } as const;
 
 /**

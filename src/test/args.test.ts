@@ -167,6 +167,20 @@ describe("parseArgs: play subcommand", () => {
 		expect(errors[0]).toContain("play <user> --gif");
 	});
 
+	test("--mute starts a play run silent", () => {
+		const args = parseArgs(["play", "moeen", "--mute"]);
+		expect(args.errors).toEqual([]);
+		expect(args.mute).toBeTrue();
+		expect(parseArgs(["play", "moeen", "-m"]).mute).toBeTrue();
+		expect(parseArgs(["play", "moeen"]).mute).toBeFalse();
+	});
+
+	test("--mute without play is an error — the heatmap has no sound", () => {
+		const errors = parseArgs(["moeen", "--mute"]).errors;
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain("--mute");
+	});
+
 	test("--out is ambiguous when both --export and --gif want to write", () => {
 		const errors = parseArgs(["play", "moeen", "-e", "svg", "--gif", "-o", "x"]).errors;
 		expect(errors).toHaveLength(1);

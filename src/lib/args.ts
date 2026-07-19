@@ -12,6 +12,7 @@ export const HELP = `
   Commands:
     play                  🎮 Play your year — a platformer where your
                           contribution graph is the level. [space] jump.
+                          Game Boy sound on by default: [m] or ${CommandMaps.mute.long} for silence.
                           With ${CommandMaps.export.long}, writes your run card when the run ends;
                           with ${CommandMaps.gif.long}, saves the whole run as a replay GIF.
 
@@ -54,6 +55,7 @@ export function parseArgs(argv: string[]): CliArgs {
 		status: false,
 		refreshCache: false,
 		gif: false,
+		mute: false,
 		errors: [],
 	};
 
@@ -107,6 +109,10 @@ export function parseArgs(argv: string[]): CliArgs {
 			case CommandMaps.gif.short:
 			case CommandMaps.gif.long:
 				args.gif = true;
+				break;
+			case CommandMaps.mute.short:
+			case CommandMaps.mute.long:
+				args.mute = true;
 				break;
 			case CommandMaps.export.short:
 			case CommandMaps.export.long: {
@@ -168,6 +174,9 @@ export function parseArgs(argv: string[]): CliArgs {
 		args.errors.push(
 			`${CommandMaps.gif.long} records a play run — try: ${APP_NAME} play <user> ${CommandMaps.gif.long}`,
 		);
+	}
+	if (args.mute && args.command !== "play") {
+		args.errors.push(`${CommandMaps.mute.long} silences a play run — the heatmap never had sound`);
 	}
 	if (args.status && args.export) {
 		args.errors.push(`${CommandMaps.status.long} and ${CommandMaps.export.long} are different modes — pick one`);

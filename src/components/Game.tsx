@@ -1,10 +1,11 @@
 import { Hud } from "@/components/Hud";
 import { COLUMN_WIDTH, MONTHS } from "@/lib/const";
-import { createEngine, respawn, step } from "@/lib/engine";
+import { createEngine, type EngineState, respawn, step } from "@/lib/engine";
 import { HEART_COLOR, HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY, STAR, STAR_COLOR, TICK_INPUT } from "@/lib/game-consts";
 import { GAME_EMOS, GAME_ICONS } from "@/lib/icons";
 import { PIT_FLUIDS, type Chunk, type GameProps } from "@/lib/schema";
 import { monthYear } from "@/lib/share";
+import { type SfxSnapshot, tickSounds } from "@/lib/sfx";
 import { nextSprite } from "@/lib/sprites";
 import { FIRE_RAMP, scaleHex } from "@/themes";
 import { Box, Text, useApp, useInput, useStdin, useStdout } from "ink";
@@ -18,6 +19,15 @@ import { useEffect, useRef, useState } from "react";
  * half-row ▀/▄ sprite that doubles the jump arc's vertical resolution.
  */
 
+/** The engine fields tickSounds diffs — taken before and after step(). */
+const sfxSnapshot = (w: EngineState): SfxSnapshot => ({
+	status: w.status,
+	jumpsUsed: w.jumpsUsed,
+	flames: w.flames,
+	stars: w.stars.size,
+	checkpoint: w.checkpoint,
+});
+
 export function Game({
 	level,
 	username,
@@ -25,6 +35,7 @@ export function Game({
 	sprite,
 	onSpriteChange,
 	interactive,
+	sound,
 	maxFrames,
 	fps,
 	shame,
@@ -49,10 +60,17 @@ export function Game({
 	const inputLog = useRef<number[]>([]);
 	// Who you play as: the hash/config default until [tab] says otherwise.
 	const [chosen, setChosen] = useState(sprite);
+	// Mirror of sound.muted so the title-screen hint re-renders on [m] — the
+	// Sound object itself is a mutable ref, not React state.
+	const [muted, setMuted] = useState(sound?.muted ?? true);
 
 	useInput(
 		(input, key) => {
 			if (input === HUD_INPUT.quit) exit();
+			if (input === HUD_INPUT.mute && sound) {
+				sound.muted = !sound.muted;
+				setMuted(sound.muted);
+			}
 			if (!started) {
 				if (key.tab) setChosen((s) => nextSprite(s));
 				// The start press must not double as the first jump.
@@ -104,12 +122,18 @@ export function Game({
 				respawn(world.current, level);
 				inputLog.current.push(TICK_INPUT.respawn);
 			} else {
+				const before = sfxSnapshot(world.current);
 				step(world.current, level, dt, { jump });
 				// Ticks after a won/over screen aren't the run — the log ends
 				// where the run does (idle dead ticks stay: they're the pause
 				// between a death and its [r], and the replay should breathe too).
 				if (statusBefore === "running" || statusBefore === "dead") {
 					inputLog.current.push(jump ? TICK_INPUT.jump : TICK_INPUT.idle);
+				}
+				// SFX are a pure diff across step() — the engine (and with it
+				// the --gif replay) never knows sound exists.
+				for (const name of tickSounds(before, sfxSnapshot(world.current))) {
+					sound?.play(name);
 				}
 			}
 			// A run just ended — write the --export card / --gif replay exactly
@@ -129,7 +153,7 @@ export function Game({
 			setFrame((f) => f + 1);
 		}, 1000 / fps);
 		return () => clearInterval(id);
-	}, [fps, level, maxFrames, interactive, exit, started, onRunEnd]);
+	}, [fps, level, maxFrames, interactive, exit, started, onRunEnd, sound]);
 
 	const w = world.current;
 	const columns = level.columns;
@@ -165,7 +189,9 @@ export function Game({
 						dimColor
 					>{`${GAME_ICONS.star} ${STAR.MIN_COUNT}+ contribution days shine — grab one and for ${STAR.DURATION_S}s the level can't touch you`}</Text>
 				)}
-				<Text color={theme.accent}>{`[space] start · [${HUD_INPUT.quit}] quit`}</Text>
+				<Text color={theme.accent}>
+					{`[space] start${sound ? ` · [${HUD_INPUT.mute}] sound: ${muted ? "off" : "on"}` : ""} · [${HUD_INPUT.quit}] quit`}
+				</Text>
 			</Box>
 		);
 	}

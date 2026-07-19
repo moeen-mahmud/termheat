@@ -127,10 +127,11 @@ if (args.export && args.command !== "play") {
 if (args.command === "play") {
 	try {
 		const days = await fetchContributions(username);
-		const [{ render }, { Game }, { buildLevel }] = await Promise.all([
+		const [{ render }, { Game }, { buildLevel }, { createSound }] = await Promise.all([
 			import("ink"),
 			import("@/components/Game"),
 			import("@/level"),
+			import("@/sound"),
 		]);
 		const level = buildLevel(days);
 		if (level.columns.length === 0) {
@@ -138,6 +139,9 @@ if (args.command === "play") {
 			process.exit(1);
 		}
 		const isTTY = process.stdout.isTTY === true;
+		// Game Boy SFX, on by default — [m] and --mute silence them, non-TTY
+		// demo runs never even write the WAVs.
+		const sound = createSound({ enabled: isTTY, muted: args.mute });
 		// --export writes the run card, --gif the replay, when the run ends
 		// (won or out of hearts). Both may be set; the note lists every path.
 		const exportFormat = args.export;
@@ -170,6 +174,7 @@ if (args.command === "play") {
 				}}
 				fps={PLAY_FPS}
 				interactive={isTTY}
+				sound={sound}
 				maxFrames={isTTY ? Number.POSITIVE_INFINITY : 90}
 				shame={args.shame || config.shame === true}
 				onRunEnd={onRunEnd}

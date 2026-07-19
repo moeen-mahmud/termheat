@@ -49,6 +49,10 @@ export const CommandMaps = {
 		short: "-g",
 		long: "--gif",
 	},
+	mute: {
+		short: "-m",
+		long: "--mute",
+	},
 	status: {
 		/** Uppercase: -s is taken by --shame. */
 		short: "-S",
