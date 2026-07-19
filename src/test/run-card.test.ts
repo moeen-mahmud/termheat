@@ -43,6 +43,9 @@ describe("renderRunCard", () => {
 		// Jul clean (green), Aug one death (yellow), Sep clean.
 		expect(svg.match(/#2ea043/g)).toHaveLength(2);
 		expect(svg.match(/#d29922/g)).toHaveLength(1);
+		// The terrain strip: every day gets a bar, and the death leaves a dated tick.
+		expect(svg.match(/<rect/g)!.length).toBeGreaterThan(90);
+		expect(svg).toContain("died here: 2025-08-10");
 		expect(svg).toContain("cleared in 48s");
 		expect(svg).toContain("1 death ·");
 		expect(svg).toContain("7/10 flames");
@@ -58,7 +61,8 @@ describe("renderRunCard", () => {
 		const svg = renderRunCard({ username: "moeen-mahmud", w, level, theme: themeFor("github") });
 		expect(svg).toContain("out of hearts in Aug '25");
 		expect(svg.match(/#21262d/g)).toHaveLength(1); // Sep never reached
-		expect(svg.match(/#f85149/g)).toHaveLength(1); // Aug bled twice
+		// Aug's bloody tile + one terrain tick per distinct death column.
+		expect(svg.match(/#f85149/g)).toHaveLength(3);
 	});
 
 	test("the username is XML-escaped everywhere it appears", () => {
