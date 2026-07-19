@@ -10,7 +10,8 @@ export const HUD_INPUT = {
 	restart: "r",
 	jump: " ",
 	quit: "q",
-};
+	help: "h",
+} as const;
 
 export const GAME = {
 	/** Steepest climb the repair pass leaves standing, in rows. */

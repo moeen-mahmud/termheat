@@ -14,9 +14,13 @@ import type { GameLevel } from "@/lib/types";
  */
 
 /**
- * One tile per month checkpoint, Wordle-graded by deaths:
+ * One grade per month checkpoint, Wordle-style by deaths:
  * clean clear 🟩 · one death 🟨 · a struggle 🟥 · never reached ⬛.
+ * The terminal card maps grades to emoji; the SVG run card maps the same
+ * grades to tile colors — one judgement, two skins.
  */
+export type MonthGrade = keyof typeof GRADE;
+
 const GRADE = {
 	clean: "🟩",
 	scraped: "🟨",
@@ -24,7 +28,7 @@ const GRADE = {
 	unreached: "⬛",
 } as const;
 
-export function monthRow(w: EngineState, level: GameLevel): string {
+export function monthGrades(w: EngineState, level: GameLevel): MonthGrade[] {
 	const checkpoints = level.checkpoints;
 	// A death belongs to the last checkpoint at or before its column.
 	const deathsPerMonth = checkpoints.map(() => 0);
@@ -38,12 +42,16 @@ export function monthRow(w: EngineState, level: GameLevel): string {
 	// Winning means every month was reached; otherwise the checkpoint index is
 	// exactly how far the run got (it only ever advances).
 	const reached = w.status === "won" ? checkpoints.length - 1 : w.checkpoint;
-	return checkpoints
-		.map((_, i) => {
-			if (i > reached) return GRADE.unreached;
-			const deaths = deathsPerMonth[i]!;
-			return deaths === 0 ? GRADE.clean : deaths === 1 ? GRADE.scraped : GRADE.bloody;
-		})
+	return checkpoints.map((_, i) => {
+		if (i > reached) return "unreached";
+		const deaths = deathsPerMonth[i]!;
+		return deaths === 0 ? "clean" : deaths === 1 ? "scraped" : "bloody";
+	});
+}
+
+export function monthRow(w: EngineState, level: GameLevel): string {
+	return monthGrades(w, level)
+		.map((grade) => GRADE[grade])
 		.join("");
 }
 
@@ -58,12 +66,21 @@ export function fmtRunTime(seconds: number): string {
 export const monthYear = (dateISO?: string): string =>
 	dateISO ? `${MONTHS[Number(dateISO.slice(5, 7)) - 1] ?? ""} '${dateISO.slice(2, 4)}` : "";
 
+/** "cleared in 48s" or "out of hearts in Aug '25" — shared by both cards. */
+export function outcomeLine(w: EngineState, level: GameLevel): string {
+	return w.status === "won"
+		? `cleared in ${fmtRunTime(w.runS)}`
+		: `out of hearts in ${monthYear(level.columns[w.deathColumn ?? 0]?.date)}`;
+}
+
+/** "Jul '25 → Jul '26" — the span the level covers. */
+export function yearSpan(level: GameLevel): string {
+	return `${monthYear(level.columns[0]?.date)} → ${monthYear(level.columns.at(-1)?.date)}`;
+}
+
 export function shareCard(w: EngineState, level: GameLevel, username: string): string {
-	const span = `${monthYear(level.checkpoints[0]?.date)} → ${monthYear(level.columns.at(-1)?.date)}`;
-	const outcome =
-		w.status === "won"
-			? `cleared in ${fmtRunTime(w.runS)}`
-			: `out of hearts in ${monthYear(level.columns[w.deathColumn ?? 0]?.date)}`;
+	const span = yearSpan(level);
+	const outcome = outcomeLine(w, level);
 	return [
 		`termheat · ${username}'s year · ${span}`,
 		monthRow(w, level),

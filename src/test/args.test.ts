@@ -137,9 +137,15 @@ describe("parseArgs: play subcommand", () => {
 	});
 
 	test("modes that bypass the TUI don't apply to play", () => {
-		expect(parseArgs(["play", "-e", "svg"]).errors[0]).toContain("play");
 		expect(parseArgs(["play", "-S"]).errors[0]).toContain("play");
 		expect(parseArgs(["play", "-w"]).errors[0]).toContain("play");
+	});
+
+	test("--export applies to play — it writes the end-of-run card", () => {
+		const args = parseArgs(["play", "moeen", "-e", "svg", "-o", "run.svg"]);
+		expect(args.errors).toEqual([]);
+		expect(args.export).toBe("svg");
+		expect(args.out).toBe("run.svg");
 	});
 
 	test("a user actually named 'play' is reachable via -u", () => {

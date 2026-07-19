@@ -14,6 +14,7 @@ import {
 	VISIBLE_HEATMAP_COLUMNS_MIN,
 	VISIBLE_HEATMAP_FIT,
 } from "@/lib/const";
+import { HUD_INPUT } from "@/lib/game-consts";
 import type { AppProps } from "@/lib/schema";
 import type { ContributionDay } from "@/lib/types";
 import { currentStreakDates } from "@/streak";
@@ -81,9 +82,9 @@ export function App({ username, theme, watch, refreshMinutes, shame, animate, as
 
 	useInput(
 		(input) => {
-			if (input === "q") exit();
-			if (input === "r" && !fetching) void load();
-			if (input === "h") showHelp();
+			if (input === HUD_INPUT.quit) exit();
+			if (input === HUD_INPUT.restart && !fetching) void load();
+			if (input === HUD_INPUT.help) showHelp();
 		},
 		{ isActive: interactive },
 	);

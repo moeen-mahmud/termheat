@@ -1,3 +1,4 @@
+import type { EngineState } from "@/lib/engine";
 import { GAME_ICONS } from "@/lib/icons";
 import type { ContributionDay, ExportFormat, GameLevel, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
 
@@ -124,6 +125,12 @@ export interface GameProps {
 	fps: number;
 	/** Roast-grade death lines. Off = dry, factual ones (shame is opt-in). */
 	shame: boolean;
+	/**
+	 * Called once when a run ends (won or out of hearts) — index.tsx uses it to
+	 * write the --export run card. Resolves to a note shown on the end screen
+	 * (the path written); rejections surface their message the same way.
+	 */
+	onRunEnd?: (w: EngineState) => Promise<string>;
 }
 
 export interface AppProps {

@@ -14,12 +14,15 @@ export function Hud({
 	username,
 	accent,
 	shame,
+	runNote,
 }: {
 	w: ReturnType<typeof createEngine>;
 	level: GameProps["level"];
 	username: string;
 	accent: string;
 	shame: boolean;
+	/** End-of-run export note ("run card saved → …"), shown on end screens. */
+	runNote?: string;
 }) {
 	const hearts =
 		GAME_ICONS.heart.repeat(w.hearts) + GAME_ICONS.heartEmpty.repeat(Math.max(0, w.heartsMax - w.hearts));
@@ -31,6 +34,7 @@ export function Hud({
 					{`${GAME_EMOS.finish} You made it to today, ${username}! Copy your run · [${HUD_INPUT.quit}] quit`}
 				</Text>
 				<Text>{shareCard(w, level, username)}</Text>
+				{runNote === undefined ? null : <Text dimColor>{`↳ ${runNote}`}</Text>}
 			</Box>
 		);
 	}
@@ -46,6 +50,7 @@ export function Hud({
 						{`${GAME_ICONS.bug} ${line} Out of hearts · [${HUD_INPUT.restart}] restart from January · [${HUD_INPUT.quit}] quit`}
 					</Text>
 					<Text>{shareCard(w, level, username)}</Text>
+					{runNote === undefined ? null : <Text dimColor>{`↳ ${runNote}`}</Text>}
 				</Box>
 			);
 		}

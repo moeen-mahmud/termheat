@@ -1,9 +1,10 @@
 import { ConfigError, configPath, loadConfig } from "@/config";
-import { exportCard, ExportError } from "@/export";
+import { exportCard, ExportError, exportRunCard } from "@/export";
 import { fetchContributions, GitHubError } from "@/github";
 import { HELP, parseArgs } from "@/lib/args";
 import { APP_NAME, APP_VERSION, DEFAULT_THEME, STATUS_TTL_MINUTES } from "@/lib/const";
 import { NO_COLOR } from "@/lib/env";
+import type { EngineState } from "@/lib/engine";
 import { PLAY_FPS } from "@/lib/game-consts";
 import type { TermheatConfig } from "@/lib/schema";
 import { isStale, readCache, statusLine, writeCacheEntry } from "@/status";
@@ -95,8 +96,9 @@ if (args.status) {
 	}
 }
 
-// --export bypasses Ink entirely: fetch, write the card, exit.
-if (args.export) {
+// --export bypasses Ink entirely: fetch, write the card, exit. Under `play`
+// the same flag means the end-of-run card instead — that route handles it.
+if (args.export && args.command !== "play") {
 	try {
 		const days = await fetchContributions(username);
 		const path = await exportCard({
@@ -135,6 +137,12 @@ if (args.command === "play") {
 			process.exit(1);
 		}
 		const isTTY = process.stdout.isTTY === true;
+		// --export writes the run card when the run ends (won or out of hearts).
+		const exportFormat = args.export;
+		const onRunEnd =
+			exportFormat === undefined
+				? undefined
+				: (w: EngineState) => exportRunCard({ username, w, level, theme, format: exportFormat, out: args.out });
 		const { waitUntilExit } = render(
 			<Game
 				level={level}
@@ -144,6 +152,7 @@ if (args.command === "play") {
 				interactive={isTTY}
 				maxFrames={isTTY ? Number.POSITIVE_INFINITY : 90}
 				shame={args.shame || config.shame === true}
+				onRunEnd={onRunEnd}
 			/>,
 			{ alternateScreen: isTTY, maxFps: 60 },
 		);

@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
  * half-row ▀/▄ sprite that doubles the jump arc's vertical resolution.
  */
 
-export function Game({ level, username, theme, interactive, maxFrames, fps, shame }: GameProps) {
+export function Game({ level, username, theme, interactive, maxFrames, fps, shame, onRunEnd }: GameProps) {
 	const { exit } = useApp();
 	const { stdout } = useStdout();
 	const { isRawModeSupported } = useStdin();
@@ -26,8 +26,11 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 	// that starts the moment the process spawns steals the first two seconds
 	// from anyone still reading the controls. Demo (non-TTY) runs auto-start.
 	const [started, setStarted] = useState(!interactive);
+	// End-of-run note shown on the won/over screens ("run card saved → …").
+	const [runNote, setRunNote] = useState<string>();
 	const world = useRef(createEngine(level));
 	const jumpPressed = useRef(false);
+	const runEnded = useRef(false);
 
 	useInput(
 		(input, key) => {
@@ -41,8 +44,13 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 			if (input === HUD_INPUT.restart && (world.current.status === "dead" || world.current.status === "over")) {
 				jumpPressed.current = false; // a buffered press must not fire at spawn
 				// Out of hearts = the run is over; [r] starts a fresh January.
-				if (world.current.status === "over") world.current = createEngine(level);
-				else respawn(world.current, level);
+				if (world.current.status === "over") {
+					world.current = createEngine(level);
+					runEnded.current = false; // a fresh run earns a fresh card
+					setRunNote(undefined);
+				} else {
+					respawn(world.current, level);
+				}
 			}
 		},
 		// isRawModeSupported is stdin.isTTY — undefined on a pipe, and useInput
@@ -63,13 +71,23 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 			const jump = jumpPressed.current;
 			jumpPressed.current = false;
 			step(world.current, level, dt, { jump });
+			// A run just ended — write the --export card exactly once per run.
+			// The write is async; the end screen shows the note when it lands.
+			const ended = world.current.status === "won" || world.current.status === "over";
+			if (ended && onRunEnd && !runEnded.current) {
+				runEnded.current = true;
+				onRunEnd(world.current).then(
+					(path) => setRunNote(`run card saved → ${path}`),
+					(err: unknown) => setRunNote(err instanceof Error ? err.message : String(err)),
+				);
+			}
 			// Demo mode (non-TTY smoke runs): nobody can press [r], keep rolling.
 			if (!interactive && world.current.status === "dead") respawn(world.current, level);
 			if (!interactive && world.current.status === "over") world.current = createEngine(level);
 			setFrame((f) => f + 1);
 		}, 1000 / fps);
 		return () => clearInterval(id);
-	}, [fps, level, maxFrames, interactive, exit, started]);
+	}, [fps, level, maxFrames, interactive, exit, started, onRunEnd]);
 
 	const w = world.current;
 	const columns = level.columns;
@@ -213,7 +231,7 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 
 	return (
 		<Box flexDirection="column">
-			<Hud w={w} level={level} username={username} accent={theme.accent} shame={shame} />
+			<Hud w={w} level={level} username={username} accent={theme.accent} shame={shame} runNote={runNote} />
 			{rows}
 		</Box>
 	);

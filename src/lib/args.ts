@@ -12,6 +12,7 @@ export const HELP = `
   Commands:
     play                  🎮 Play your year — a platformer where your
                           contribution graph is the level. [space] jump.
+                          With ${CommandMaps.export.long}, writes your run card when the run ends.
 
   Options:
     ${CommandMaps.username.short}, ${CommandMaps.username.long} <name>   GitHub username (or set it in ~/.${APP_NAME}.json)
@@ -155,9 +156,10 @@ export function parseArgs(argv: string[]): CliArgs {
 	if (args.status && args.export) {
 		args.errors.push(`${CommandMaps.status.long} and ${CommandMaps.export.long} are different modes — pick one`);
 	}
+	// --export DOES apply to play (it writes the end-of-run card), so only the
+	// modes that replace the TUI entirely are rejected.
 	if (args.command === "play") {
 		for (const [flag, set] of [
-			[CommandMaps.export.long, args.export !== undefined],
 			[CommandMaps.status.long, args.status],
 			[CommandMaps.watch.long, args.watch],
 		] as const) {

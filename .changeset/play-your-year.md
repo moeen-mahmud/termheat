@@ -9,5 +9,11 @@ run ends at today's column. Auto-runner with one-button controls: [space]
 jumps, tap again mid-air for a double jump. Months are respawn checkpoints;
 dead months are spanned by dim ghost bridges so every real graph is beatable.
 
+Your streak is your health bar (2 hearts + 1 per streak week), death lines are
+dated — and roast you with `--shame` — and every run ends in a Wordle-style
+share card whose last line is the replay command: any public username is a
+level. `termheat play <user> --export svg|png` also writes the run card as an
+image when the run ends.
+
 Breaking: Node >= 22 is now required (Ink 7's floor). If you're on `npx`,
 nothing changes unless your Node is older than April 2024.
