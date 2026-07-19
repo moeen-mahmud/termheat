@@ -2,6 +2,13 @@
 // engine.ts (jump physics) so "what the level guarantees" and "what the
 // player can do" never drift apart: physics must clear a MAX_GAP pit and
 // climb a MAX_RISE step, and the repair pass promises nothing harder exists.
+
+export const HUD_INPUT = {
+	restart: "r",
+	jump: " ",
+	quit: "q",
+};
+
 export const GAME = {
 	/** Steepest climb the repair pass leaves standing, in rows. */
 	MAX_RISE: 2,
@@ -17,8 +24,21 @@ export const GAME = {
 	FLAME_MIN_STREAK: 3,
 } as const;
 
+// Consistency is power, mechanically: your current streak buys hearts, and
+// hearts are what separate "lose 10 columns" from "lose the run".
+export const HEARTS = {
+	/** Everyone starts here — a quiet week shouldn't mean one-death runs. */
+	BASE: 2,
+	/** One extra heart per this many days of current streak. */
+	PER_STREAK_DAYS: 7,
+	MAX: 5,
+} as const;
+
 /** Game render tick. Play-test verdict: 20 feels smooth (15 was okay). */
 export const PLAY_FPS = 20;
 
 export const PF_ROWS = 10; // terrain (0–4) + jump apex (3) + double-jump headroom
 export const PLAYER_SCREEN_DAY = 10; // sprite sits this many day-columns in from the left
+
+/** Altitude assigned while over a pit — far enough down that y < -1 = dead. */
+export const NO_FLOOR = -10;

@@ -26,6 +26,9 @@ export interface Heatmap {
 // and the game renderer. Kept here (not in level.ts) per the one-concern-per-
 // file rule: types.ts owns domain shapes, level.ts owns the logic.
 
+export type GameStatus = "running" | "dead" | "over" | "won";
+export type DeathCause = "pit" | "wall";
+
 /** One playable day-column of a `termheat play` level. */
 export interface LevelColumn {
 	/** ISO date this column represents. */
@@ -56,6 +59,8 @@ export interface GameLevel {
 	finishColumn: number;
 	/** How many flames exist, for the HUD's `n/total` counter. */
 	flameTotal: number;
+	/** Length of the current streak in days — buys hearts (see HEARTS). */
+	currentStreak: number;
 }
 
 /**

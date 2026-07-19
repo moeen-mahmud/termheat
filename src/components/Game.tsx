@@ -1,8 +1,9 @@
 import { Hud } from "@/components/Hud";
 import { COLUMN_WIDTH } from "@/lib/const";
 import { createEngine, respawn, step } from "@/lib/engine";
-import { PF_ROWS, PLAYER_SCREEN_DAY } from "@/lib/game-consts";
-import type { GameProps } from "@/lib/schema";
+import { HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY } from "@/lib/game-consts";
+import { GAME_ICONS } from "@/lib/icons";
+import { PIT_FLUIDS, type Chunk, type GameProps } from "@/lib/schema";
 import { FIRE_RAMP, scaleHex } from "@/themes";
 import { Box, Text, useApp, useInput, useStdin, useStdout } from "ink";
 import { useEffect, useRef, useState } from "react";
@@ -15,13 +16,7 @@ import { useEffect, useRef, useState } from "react";
  * half-row ▀/▄ sprite that doubles the jump arc's vertical resolution.
  */
 
-interface Chunk {
-	text: string;
-	color?: string;
-	bg?: string;
-}
-
-export function Game({ level, username, theme, interactive, maxFrames, fps }: GameProps) {
+export function Game({ level, username, theme, interactive, maxFrames, fps, shame }: GameProps) {
 	const { exit } = useApp();
 	const { stdout } = useStdout();
 	const { isRawModeSupported } = useStdin();
@@ -31,11 +26,13 @@ export function Game({ level, username, theme, interactive, maxFrames, fps }: Ga
 
 	useInput(
 		(input, key) => {
-			if (input === "q") exit();
-			if (input === " " || key.upArrow) jumpPressed.current = true;
-			if (input === "r" && world.current.status === "dead") {
+			if (input === HUD_INPUT.quit) exit();
+			if (input === HUD_INPUT.jump || key.upArrow) jumpPressed.current = true;
+			if (input === HUD_INPUT.restart && (world.current.status === "dead" || world.current.status === "over")) {
 				jumpPressed.current = false; // a buffered press must not fire at spawn
-				respawn(world.current, level);
+				// Out of hearts = the run is over; [r] starts a fresh January.
+				if (world.current.status === "over") world.current = createEngine(level);
+				else respawn(world.current, level);
 			}
 		},
 		// isRawModeSupported is stdin.isTTY — undefined on a pipe, and useInput
@@ -57,6 +54,7 @@ export function Game({ level, username, theme, interactive, maxFrames, fps }: Ga
 			step(world.current, level, dt, { jump });
 			// Demo mode (non-TTY smoke runs): nobody can press [r], keep rolling.
 			if (!interactive && world.current.status === "dead") respawn(world.current, level);
+			if (!interactive && world.current.status === "over") world.current = createEngine(level);
 			setFrame((f) => f + 1);
 		}, 1000 / fps);
 		return () => clearInterval(id);
@@ -84,8 +82,16 @@ export function Game({ level, username, theme, interactive, maxFrames, fps }: Ga
 	const playerColor = w.status === "dead" ? FIRE_RAMP[0] : FIRE_RAMP[3];
 	const ghostColor = scaleHex(theme.levels[2], 0.5);
 	// Flames flicker by cycling the fire ramp — a pure function of elapsed
-	// time (the animation contract), and what makes ▲ read as fire at speed.
+	// time (the animation contract), and what makes ♦ read as fire at speed.
 	const flameColor = FIRE_RAMP[Math.floor(w.elapsed * 8) % FIRE_RAMP.length];
+	const fluidCh = PIT_FLUIDS[theme.name][Math.floor(w.elapsed * 2) % 2]!;
+	const fluidColor = theme.name === "fire" ? FIRE_RAMP[0] : theme.name === "ocean" ? theme.levels[2] : ghostColor;
+
+	// Month checkpoints fly flags: bright once passed (your respawn floor),
+	// dim ahead. The spawn checkpoint needs no flag — you're standing on it.
+	const anchorCol = level.checkpoints[w.checkpoint]?.column ?? 0;
+	const flags = new Map<number, boolean>();
+	for (const cp of level.checkpoints.slice(1)) flags.set(cp.column, cp.column <= anchorCol);
 
 	const rows = [];
 	for (let r = 0; r < PF_ROWS; r++) {
@@ -103,26 +109,33 @@ export function Game({ level, username, theme, interactive, maxFrames, fps }: Ga
 			let color: string | undefined;
 			let bg: string | undefined;
 			if (terrainDrawn) {
-				ch = cell.ghost ? "▀" : "█"; // ghost bridges are thin floating slabs
+				ch = cell.ghost ? GAME_ICONS.ghostBridge : GAME_ICONS.bridge; // ghost bridges are thin floating slabs
 				color = terrainColor;
 			}
+			if (cell !== undefined && height === 0 && rowFromBottom === 0) {
+				ch = fluidCh; // pit floor — lava/water/void, per tileset
+				color = fluidColor;
+			}
 			if (cell?.flame && !w.collected.has(day) && rowFromBottom === height) {
-				// ♦, not ▲ — play-test verdict: triangles read as spikes/danger,
-				// and a collectible must invite touch, not warn against it.
-				ch = "♦";
+				ch = GAME_ICONS.flame; // collectible flame — a ♦ that flickers by cycling the fire ramp
 				color = flameColor;
 			}
+			const flagPassed = flags.get(day);
+			if (flagPassed !== undefined && rowFromBottom === height) {
+				ch = GAME_ICONS.flag; // month checkpoint
+				color = flagPassed ? theme.accent : ghostColor;
+			}
 			if (day === level.finishColumn && rowFromBottom >= height) {
-				ch = "░"; // today — a shimmer pillar marks the finish
+				ch = GAME_ICONS.finish; // today — a shimmer pillar marks the finish
 				color = theme.accent;
 			}
 			if (c === playerChar || c === playerChar + 1) {
 				if (rowFromBottom === spriteRow) {
-					ch = spriteHalf ? "▀" : "█";
+					ch = spriteHalf ? GAME_ICONS.ghostBridge : GAME_ICONS.bridge;
 					color = playerColor;
 					bg = spriteHalf && terrainDrawn ? terrainColor : undefined;
 				} else if (spriteHalf && rowFromBottom === spriteRow + 1) {
-					ch = "▄";
+					ch = GAME_ICONS.bridgeAlt;
 					color = playerColor;
 					bg = terrainDrawn ? terrainColor : undefined;
 				}
@@ -146,7 +159,7 @@ export function Game({ level, username, theme, interactive, maxFrames, fps }: Ga
 
 	return (
 		<Box flexDirection="column">
-			<Hud w={w} level={level} username={username} accent={theme.accent} />
+			<Hud w={w} level={level} username={username} accent={theme.accent} shame={shame} />
 			{rows}
 		</Box>
 	);

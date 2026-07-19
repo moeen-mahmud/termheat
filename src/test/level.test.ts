@@ -179,7 +179,19 @@ describe("buildLevel", () => {
 			checkpoints: [],
 			finishColumn: -1,
 			flameTotal: 0,
+			currentStreak: 0,
 		});
+	});
+
+	test("currentStreak counts the run ending at today — hearts fuel", () => {
+		const days = makeDays([1, 0, 2, 3, 4]);
+		expect(buildLevel(days, { today: lastDate(days) }).currentStreak).toBe(3);
+		// Lenient semantics: an empty *today* is still in play, but an empty
+		// yesterday breaks the run.
+		const stillInPlay = makeDays([1, 1, 1, 0]);
+		expect(buildLevel(stillInPlay, { today: lastDate(stillInPlay) }).currentStreak).toBe(3);
+		const broken = makeDays([1, 1, 0, 0]);
+		expect(buildLevel(broken, { today: lastDate(broken) }).currentStreak).toBe(0);
 	});
 
 	test("a gnarly synthetic year is beatable end to end", () => {

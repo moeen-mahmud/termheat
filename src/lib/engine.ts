@@ -1,4 +1,5 @@
-import type { GameLevel } from "@/lib/types";
+import { HEARTS, NO_FLOOR } from "@/lib/game-consts";
+import type { DeathCause, GameLevel, GameStatus } from "@/lib/types";
 
 /**
  * The `termheat play` physics engine.
@@ -68,12 +69,6 @@ export const G_DOWN = 2 * G_UP; // fast falls read as weight, not floatiness
 export const JUMP_V0 = (2 * PHYSICS.APEX_ROWS) / PHYSICS.TIME_TO_APEX;
 export const AIR_JUMP_V0 = (2 * PHYSICS.AIR_APEX_ROWS) / PHYSICS.AIR_TIME_TO_APEX;
 
-/** Altitude assigned while over a pit — far enough down that y < -1 = dead. */
-const NO_FLOOR = -10;
-
-export type GameStatus = "running" | "dead" | "won";
-export type DeathCause = "pit" | "wall";
-
 export interface EngineState {
 	/** Player's left edge in day-columns. Advances automatically — auto-runner. */
 	x: number;
@@ -96,6 +91,9 @@ export interface EngineState {
 	collected: Set<number>;
 	/** Index into level.checkpoints of the last checkpoint passed. */
 	checkpoint: number;
+	/** Lives left. Each death costs one; at zero the run is over. */
+	hearts: number;
+	heartsMax: number;
 }
 
 export interface StepInput {
@@ -103,8 +101,14 @@ export interface StepInput {
 	jump: boolean;
 }
 
+/** Consistency is power: the current streak buys hearts, one per week. */
+export function heartsFor(currentStreak: number): number {
+	return Math.min(HEARTS.MAX, HEARTS.BASE + Math.floor(currentStreak / HEARTS.PER_STREAK_DAYS));
+}
+
 export function createEngine(level: GameLevel): EngineState {
 	const spawn = level.checkpoints[0]?.column ?? 0;
+	const hearts = heartsFor(level.currentStreak);
 	return {
 		x: spawn,
 		y: level.columns[spawn]?.height ?? 1,
@@ -119,6 +123,8 @@ export function createEngine(level: GameLevel): EngineState {
 		flames: 0,
 		collected: new Set(),
 		checkpoint: 0,
+		hearts,
+		heartsMax: hearts,
 	};
 }
 
@@ -221,6 +227,7 @@ export function step(w: EngineState, level: GameLevel, dt: number, input: StepIn
  * dying is punishment enough.
  */
 export function respawn(w: EngineState, level: GameLevel): void {
+	if (w.status !== "dead") return; // out of hearts ("over") = restart, not respawn
 	const checkpointCol = (level.checkpoints[w.checkpoint] ?? level.checkpoints[0])?.column ?? 0;
 	let column = Math.max(checkpointCol, (w.deathColumn ?? checkpointCol) - PHYSICS.RESPAWN_BACKOFF_COLS);
 	while (column > checkpointCol && (level.columns[column]?.height ?? 0) <= 0) column--;
@@ -244,7 +251,8 @@ export function respawn(w: EngineState, level: GameLevel): void {
 }
 
 function die(w: EngineState, cause: DeathCause, column: number): void {
-	w.status = "dead";
+	w.hearts--;
+	w.status = w.hearts > 0 ? "dead" : "over";
 	w.deathCause = cause;
 	w.deathColumn = column;
 	w.deaths++;

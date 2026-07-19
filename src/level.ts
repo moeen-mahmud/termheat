@@ -1,7 +1,7 @@
 import { levelFor } from "@/heatmap";
 import { GAME } from "@/lib/game-consts";
 import type { ContributionDay, GameLevel, LevelCheckpoint, LevelColumn } from "@/lib/types";
-import { localTodayISO } from "@/streak";
+import { currentStreak, localTodayISO } from "@/streak";
 
 /**
  * Turns a year of contributions into a beatable platformer level.
@@ -29,7 +29,7 @@ export function buildLevel(days: ContributionDay[], opts: BuildLevelOptions = {}
 	// ends at today's cell, so future days never become columns.
 	const sorted = days.filter((d) => d.date <= today).sort((a, b) => (a.date < b.date ? -1 : 1));
 	if (sorted.length === 0) {
-		return { columns: [], checkpoints: [], finishColumn: -1, flameTotal: 0 };
+		return { columns: [], checkpoints: [], finishColumn: -1, flameTotal: 0, currentStreak: 0 };
 	}
 
 	// Repair pipeline: spawn pad → clamp cliffs → bridge pits, in that order.
@@ -72,6 +72,7 @@ export function buildLevel(days: ContributionDay[], opts: BuildLevelOptions = {}
 		checkpoints: findCheckpoints(columns),
 		finishColumn: columns.length - 1,
 		flameTotal: flames.size,
+		currentStreak: currentStreak(sorted, today),
 	};
 }
 

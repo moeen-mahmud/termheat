@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { shameLine } from "@/lib/shame";
+import { deathLine, prettyDate, shameLine } from "@/lib/shame";
 
 describe("shameLine", () => {
 	test("an empty year gets the blank-canvas line, not a nag", () => {
@@ -38,5 +38,29 @@ describe("shameLine", () => {
 			const line = shameLine(input);
 			expect(line === null || line.length > 0).toBe(true);
 		}
+	});
+});
+
+describe("deathLine", () => {
+	test("without shame the line is dry and factual", () => {
+		expect(deathLine("2026-03-14", "pit", false)).toBe("March 14th: a zero-day swallowed you");
+		expect(deathLine("2026-03-14", "wall", false)).toBe("March 14th: you ran into a wall of commits");
+	});
+
+	test("shame lines are dated and deterministic — same day, same roast", () => {
+		const line = deathLine("2026-03-14", "pit", true);
+		expect(line).toContain("March 14th");
+		expect(deathLine("2026-03-14", "pit", true)).toBe(line);
+		// Different dates can pick different lines, but all stay dated.
+		expect(deathLine("2026-07-01", "wall", true)).toContain("July 1st");
+	});
+
+	test("ordinal suffixes survive the awkward teens", () => {
+		expect(prettyDate("2026-01-01")).toBe("January 1st");
+		expect(prettyDate("2026-08-22")).toBe("August 22nd");
+		expect(prettyDate("2026-04-03")).toBe("April 3rd");
+		expect(prettyDate("2026-11-11")).toBe("November 11th");
+		expect(prettyDate("2026-12-13")).toBe("December 13th");
+		expect(prettyDate("2026-05-31")).toBe("May 31st");
 	});
 });

@@ -1,3 +1,4 @@
+import { GAME_ICONS } from "@/lib/icons";
 import type { ContributionDay, ExportFormat, GameLevel, Heatmap as HeatmapData, ThemeName } from "@/lib/types";
 
 export interface CliArgs {
@@ -93,6 +94,25 @@ export interface StatsBarProps {
 	ascii: boolean;
 }
 
+/**
+ * A chunk of text with optional foreground and background colors. Ink's `<Text>` supports a `backgroundColor` prop, but it doesn't support a `bg` shorthand, so we use `bg` here to avoid confusion with Ink's `backgroundColor`.
+ */
+export interface Chunk {
+	text: string;
+	color?: string;
+	bg?: string;
+}
+
+// Themes double as tilesets: what fills a pit tells you what falls into it.
+// Two chars alternate on elapsed time so the fluid bubbles/laps. Every theme
+// marks its pit floors — pits must telegraph, whatever the palette.
+export const PIT_FLUIDS: Record<ThemeName, [string, string]> = {
+	fire: [GAME_ICONS.pitFloorAlt, GAME_ICONS.pitFloor], // lava world
+	ocean: [GAME_ICONS.pitFloorWater, GAME_ICONS.pitFloorWaterAlt], // water world
+	github: [GAME_ICONS.pitFloor, GAME_ICONS.pitFloor],
+	mono: [GAME_ICONS.pitFloor, GAME_ICONS.pitFloor],
+};
+
 export interface GameProps {
 	level: GameLevel;
 	username: string;
@@ -102,6 +122,8 @@ export interface GameProps {
 	/** Auto-exit after this many ticks; Infinity for interactive runs. */
 	maxFrames: number;
 	fps: number;
+	/** Roast-grade death lines. Off = dry, factual ones (shame is opt-in). */
+	shame: boolean;
 }
 
 export interface AppProps {

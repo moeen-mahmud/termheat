@@ -143,6 +143,7 @@ if (args.command === "play") {
 				fps={PLAY_FPS}
 				interactive={isTTY}
 				maxFrames={isTTY ? Number.POSITIVE_INFINITY : 90}
+				shame={args.shame || config.shame === true}
 			/>,
 			{ alternateScreen: isTTY, maxFps: 60 },
 		);

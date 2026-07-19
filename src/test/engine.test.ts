@@ -1,12 +1,25 @@
-import { GAME } from "@/lib/game-consts";
-import { AIR_JUMP_V0, createEngine, type EngineState, JUMP_V0, PHYSICS, respawn, speedAt, step } from "@/lib/engine";
+import { GAME, HEARTS } from "@/lib/game-consts";
+import {
+	AIR_JUMP_V0,
+	createEngine,
+	type EngineState,
+	heartsFor,
+	JUMP_V0,
+	PHYSICS,
+	respawn,
+	speedAt,
+	step,
+} from "@/lib/engine";
 import type { GameLevel, Level, LevelColumn } from "@/lib/types";
 import { describe, expect, test } from "bun:test";
 
 const DT = 1 / 20; // the default render tick; physics must not care (dt-based)
 const DAY_MS = 86_400_000;
 
-function makeLevel(heights: number[], opts: { flames?: number[]; checkpoints?: number[] } = {}): GameLevel {
+function makeLevel(
+	heights: number[],
+	opts: { flames?: number[]; checkpoints?: number[]; currentStreak?: number } = {},
+): GameLevel {
 	const base = Date.parse("2026-01-01T00:00:00Z");
 	const flames = opts.flames ?? [];
 	const columns: LevelColumn[] = heights.map((h, i) => ({
@@ -25,6 +38,7 @@ function makeLevel(heights: number[], opts: { flames?: number[]; checkpoints?: n
 		})),
 		finishColumn: columns.length - 1,
 		flameTotal: flames.length,
+		currentStreak: opts.currentStreak ?? 0,
 	};
 }
 
@@ -238,6 +252,35 @@ describe("flames, checkpoints, win", () => {
 		runUntil(w, level, () => false);
 		expect(w.status).toBe("won");
 		expect(w.x).toBe(level.finishColumn);
+	});
+
+	test("hearts: the current streak buys lives, capped", () => {
+		expect(heartsFor(0)).toBe(HEARTS.BASE);
+		expect(heartsFor(6)).toBe(HEARTS.BASE);
+		expect(heartsFor(7)).toBe(HEARTS.BASE + 1);
+		expect(heartsFor(21)).toBe(HEARTS.MAX);
+		expect(heartsFor(365)).toBe(HEARTS.MAX);
+		const w = createEngine(makeLevel(Array(30).fill(2), { currentStreak: 14 }));
+		expect(w.hearts).toBe(HEARTS.BASE + 2);
+		expect(w.heartsMax).toBe(w.hearts);
+	});
+
+	test("out of hearts, the run is over — respawn refuses, restart works", () => {
+		// A 10-wide pit with no input kills every life.
+		const heights = [...Array(10).fill(2), ...Array(10).fill(0), ...Array(20).fill(2)];
+		const level = makeLevel(heights, { currentStreak: 0 }); // BASE hearts
+		const w = createEngine(level);
+		for (let life = 0; life < HEARTS.BASE - 1; life++) {
+			runUntil(w, level, () => false);
+			expect(w.status).toBe("dead");
+			respawn(w, level);
+			expect(w.status).toBe("running");
+		}
+		runUntil(w, level, () => false); // last heart gone
+		expect(w.status).toBe("over");
+		expect(w.deaths).toBe(HEARTS.BASE);
+		respawn(w, level);
+		expect(w.status).toBe("over"); // over is final — only a fresh engine restarts
 	});
 
 	test("a finished simulation is frozen", () => {
