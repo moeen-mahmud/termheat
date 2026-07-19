@@ -1,5 +1,5 @@
 import { Hud } from "@/components/Hud";
-import { COLUMN_WIDTH } from "@/lib/const";
+import { COLUMN_WIDTH, MONTHS } from "@/lib/const";
 import { createEngine, respawn, step } from "@/lib/engine";
 import { HUD_INPUT, PF_ROWS, PLAYER_SCREEN_DAY } from "@/lib/game-consts";
 import { GAME_ICONS } from "@/lib/icons";
@@ -93,6 +93,21 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 	const flags = new Map<number, boolean>();
 	for (const cp of level.checkpoints.slice(1)) flags.set(cp.column, cp.column <= anchorCol);
 
+	// Timeline ribbon: month names float on the top playfield row, aligned
+	// with their checkpoint columns — a year ruler you run along. The spawn
+	// column and every January carry a year suffix ("Jul '25", "Jan '26"), so
+	// a run that starts mid-year says so at a glance. Keyed by absolute char
+	// index because labels span multiple day columns.
+	const labels = new Map<number, { ch: string; passed: boolean }>();
+	for (const [i, cp] of level.checkpoints.entries()) {
+		const year = i === 0 || cp.month === 0 ? ` '${cp.date.slice(2, 4)}` : "";
+		const text = `${MONTHS[cp.month] ?? ""}${year}`;
+		const start = cp.column * COLUMN_WIDTH;
+		for (let k = 0; k < text.length; k++) {
+			labels.set(start + k, { ch: text[k]!, passed: cp.column <= anchorCol });
+		}
+	}
+
 	const rows = [];
 	for (let r = 0; r < PF_ROWS; r++) {
 		const rowFromBottom = PF_ROWS - 1 - r;
@@ -122,8 +137,16 @@ export function Game({ level, username, theme, interactive, maxFrames, fps, sham
 			}
 			const flagPassed = flags.get(day);
 			if (flagPassed !== undefined && rowFromBottom === height) {
-				ch = GAME_ICONS.flag; // month checkpoint
+				// One flag per checkpoint: a day is COLUMN_WIDTH char cells wide, so
+				// point decorations draw on the left cell only — painting both
+				// doubled every flag into ⚑⚑.
+				ch = (baseChar + c) % COLUMN_WIDTH === 0 ? GAME_ICONS.flag : " ";
 				color = flagPassed ? theme.accent : ghostColor;
+			}
+			const label = labels.get(baseChar + c);
+			if (label !== undefined && rowFromBottom === PF_ROWS - 1) {
+				ch = label.ch; // month ribbon along the sky row
+				color = label.passed ? theme.accent : ghostColor;
 			}
 			if (day === level.finishColumn && rowFromBottom >= height) {
 				ch = GAME_ICONS.finish; // today — a shimmer pillar marks the finish

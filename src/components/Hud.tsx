@@ -51,7 +51,9 @@ export function Hud({
 		);
 	}
 
-	const month = MONTHS[Number(level.columns[Math.floor(w.x)]?.date.slice(5, 7)) - 1] ?? "";
+	// "Jul '25" — the level spans two calendar years, so the month alone is ambiguous.
+	const date = level.columns[Math.floor(w.x)]?.date ?? "";
+	const month = date ? `${MONTHS[Number(date.slice(5, 7)) - 1] ?? ""} '${date.slice(2, 4)}` : "";
 	return (
 		<Text>
 			<Text color={HEART_COLOR}>{hearts}</Text>
